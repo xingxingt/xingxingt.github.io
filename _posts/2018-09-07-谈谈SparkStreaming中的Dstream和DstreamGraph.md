@@ -74,9 +74,9 @@ tags:
 #### 而Dstream的generateJob方法中调用DStream的gerorcompute,在此方法中根据时间在generatedRDDs中存储对应Time的RDD数组,其他每个DStream都有一个这样的数据结构来根据Time来存储对应的RDD；
 ![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0siskd3kj30qm0eswg3.jpg)
 
-### 接下来就是将基于RDD产生的Job提交给cluster进行执行……………
+#### 接下来就是将基于RDD产生的Job提交给cluster进行执行……………
 
-### 总结:其实DStream只是基于RDD的一个抽象的模板，SparkStreaming最终做执行操作的还是SparkCore的RDD；
+#### 总结:其实DStream只是基于RDD的一个抽象的模板，SparkStreaming最终做执行操作的还是SparkCore的RDD；
 
 
 
