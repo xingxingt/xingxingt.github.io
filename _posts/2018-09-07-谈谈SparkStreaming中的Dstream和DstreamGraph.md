@@ -47,6 +47,8 @@ tags:
 #### 在上面已经将要输出的DStream存放于DStreamGraph的outputStreams数组中，接下来就是具体的执行
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rqd4k96j31f80n4gmy.jpg)
 
+***
+
 
 ## 再看DStream
 ### 通过源码来看DStream是如何产生RDD的
