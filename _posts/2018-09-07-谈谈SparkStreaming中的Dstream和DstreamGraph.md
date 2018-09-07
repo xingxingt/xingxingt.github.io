@@ -51,7 +51,6 @@ tags:
 
 
 ## 再看DStream
-### 通过源码来看DStream是如何产生RDD的
 
 #### 第一：inputDStream是如何产生RDD的，还是以SocketInputDStraem为例:
 ![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0s7r256jj31im0y2wgl.jpg)
