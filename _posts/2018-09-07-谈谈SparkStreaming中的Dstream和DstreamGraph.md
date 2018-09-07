@@ -48,6 +48,48 @@ tags:
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rqd4k96j31f80n4gmy.jpg)
 
 
+## 再看DStream
+### 通过源码来看DStream是如何产生RDD的
+
+#### 第一：inputDStream是如何产生RDD的，还是以SocketInputDStraem为例:
+![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0s7r256jj31im0y2wgl.jpg)
+
+#### 第二:Transform级别的DStream:例如:FlatMappedDStream,在它的comput方法中,使用parent.getOrCompute来获取父Dstream产生的RDD，然后使用父Dstream产生的RDD来执行map方法（此map方法是基于RDD的map方法）；此处可以发现SparkStreaming是对SparkCore的一层抽象，而SparkStreaming的实际执行还是基于sparkCore实体来执行的；
+![](https://ws1.sinaimg.cn/large/0069RVTdgy1fv0s9t5w67j314204gmx7.jpg)
+
+#### 第三:再看Action级别的DStream: 例如:print(), 在foreachFunc方法中就是基于RDD进行操作的；
+![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0sbwnnnrj31c80qgabc.jpg)
+#### 而foreachDStream中的compute方法为空,是因为foreachDStream是job中最后的Action操作，而generateJob内执行的执行发放foreachFunc中执行的还是RDD的输出操作；
+![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0sdl5ytwj31gs0vkq4i.jpg)
+#### 在执行foreachRDD时将ForEachDStream register到DStreamGraph的outPutStream中
+![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0sf6xghpj30qu044glp.jpg)
+#### 而在这里定时器RecurringTimer不停的执行triggerActionForNextInterval的callback方法
+![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0sgg1rk5j30qw05wmxg.jpg)
+#### callback方法具体执行的就是DStreamGraph中的generateJobs方法，
+![](https://ws1.sinaimg.cn/large/0069RVTdgy1fv0sh8e4d3j30qm0aegm8.jpg)
+#### DStreamGraph中的generateJobs方法执行的是DStream的generateJob方法，在此方法中最终执行的是SparkCore的runJob方法;
+![](https://ws1.sinaimg.cn/large/0069RVTdgy1fv0si09bimj30qk090dg8.jpg)
+#### 而Dstream的generateJob方法中调用DStream的gerorcompute,在此方法中根据时间在generatedRDDs中存储对应Time的RDD数组,其他每个DStream都有一个这样的数据结构来根据Time来存储对应的RDD；
+![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0siskd3kj30qm0eswg3.jpg)
+
+### 接下来就是将基于RDD产生的Job提交给cluster进行执行……………
+
+### 总结:其实DStream只是基于RDD的一个抽象的模板，SparkStreaming最终做执行操作的还是SparkCore的RDD；
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
