@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      spark Shuffle
-subtitle:   
+title:      Spark Shuffle的理解
+subtitle:   Spark Shuffle的理解
 date:       2018-09-01
 author:     XINGXING
 header-img: img/post-bg-ios9-web.jpg
