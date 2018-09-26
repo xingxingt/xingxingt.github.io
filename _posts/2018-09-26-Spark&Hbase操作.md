@@ -61,7 +61,7 @@ Connection的创建是个重量级的操作，由于Connection是线程安全的
     //Connection 的创建是个重量级的工作，线程安全，是操作hbase的入口
     val conn = ConnectionFactory.createConnection(conf)
 
-##### 使用Admin创建和删除表
+使用Admin创建和删除表
     
     val userTable = TableName.valueOf("user")
     //创建 user 表
@@ -76,7 +76,7 @@ Connection的创建是个重量级的操作，由于Connection是线程安全的
     println("Done!")
       
 
-### 插入、查询、扫描、删除操作
+插入、查询、扫描、删除操作
 HBase 上的操作都需要先创建一个操作对象Put,Get,Delete等，然后调用Table上的相对应的方法
 
     try{
@@ -119,7 +119,7 @@ HBase 上的操作都需要先创建一个操作对象Put,Get,Delete等，然后
       conn.close()
     }
      
-###Spark 操作 HBase
+### Spark 操作 HBase
 #### 写入HBase
 首先要向 HBase 写入数据，我们需要用到PairRDDFunctions.saveAsHadoopDataset。
 因为 HBase 不是一个文件系统，所以saveAsHadoopFile方法没用。这个方法需要一个 
