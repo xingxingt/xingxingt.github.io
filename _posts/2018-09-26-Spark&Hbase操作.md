@@ -136,7 +136,7 @@ JobConf 作为参数，类似于一个配置项，主要需要指定输出的格
     jobConf.setOutputFormat(classOf[TableOutputFormat])
     jobConf.set(TableOutputFormat.OUTPUT_TABLE,"user")
 
-#####Step 2： RDD 到表模式的映射
+##### Step 2： RDD 到表模式的映射
 在 HBase 中的表 schema 一般是这样的：
 
     row     cf:col_1    cf:col_2
