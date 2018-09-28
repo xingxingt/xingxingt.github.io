@@ -26,12 +26,18 @@ tags:
 #### 那么InputDStream接收的数据又是如何进行存储的呢?
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rth3yb8j31cc12otal.jpg)
 ![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0rucb4l7j31be0ai0t3.jpg)
-#### 经过代码追踪发现接受的数据实际上是以block的形式存放，BlockGenerator以spark.streaming.blockInterval来生成block块，内部有一个Timer来定时生成block块：
+#### 经过代码追踪发现接受的数据实际上是以block的形式存放，BlockGenerator以spark.streaming.blockInterval作为时间单位来生成block块，内部有一个Timer来定时生成block块：我觉得这里的RecurringTimer做的挺好，同一个Timer根据不同的callback方法来执行不同的任务，get到了新技能,点赞！
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0ryyiv1wj31j0048mxe.jpg)
 ![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0rx26jfej30qm0hkmy8.jpg)
 
+#### 上面说了inputStream,接下来看下outputStream,以print操作为例:
+![](https://ws2.sinaimg.cn/large/006tNc79ly1fvp23bois9j31fk0lg3zi.jpg)
+![](https://ws4.sinaimg.cn/large/006tNc79ly1fvp269ygn8j31hy08yt94.jpg)
+#### 在这里将输出操作的Dstream注册进入了DstreamGraph的outputDstream中
+![](https://ws1.sinaimg.cn/large/006tNc79ly1fvp27z5xixj31gi0byaan.jpg)
 
-#### 而outputStreams是通过定时器RecurringTimer来添加，那就再来看下这个定时器，RecurringTimer是在JobGneretor中进行实例化的
+
+#### 上面说了inputStream,接下来看下outputStream,outputStreams是通过定时器RecurringTimer来添加，那就再来看下这个定时器，RecurringTimer是在JobGneretor中进行实例化的
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rd9oep8j31hy058q34.jpg)
 
 #### 来看下RecurringTimer执行的内容
