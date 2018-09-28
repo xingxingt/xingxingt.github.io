@@ -80,7 +80,7 @@ tags:
 
 #### 接下来就是将基于RDD产生的Job提交给cluster进行执行……………
 
-#### 总结:
+### 总结:
 其实DStream只是基于RDD的一个抽象的模板,而DstreamGreaph就是生成DAG的模板，最终每个Dstream都会生成一个以time为key，RDD[T]为value的数据结     构用来存储基于模板生成的RDD，SparkStreaming最终做执行操作的还是SparkCore的RDD；
 
 
