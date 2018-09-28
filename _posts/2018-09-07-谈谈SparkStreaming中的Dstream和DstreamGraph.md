@@ -20,7 +20,7 @@ tags:
     private val inputStreams = new ArrayBuffer[InputDStream[_]]()
     private val outputStreams = new ArrayBuffer[DStream[_]]()
     
-#### inputStreams的作用就是存放一个流的inputDstream，例如SocketInputDStream,他是在父类InputDSt中执行具体的存放操作
+#### inputStreams的作用就是存放一个流的inputDstream，例如SocketInputDStream,他是在父类InputDStream中执行具体的存放操作
 ![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0r8hs89ej314k0c674y.jpg)
 
 #### 那么InputDStream接收的数据又是如何进行存储的呢?
