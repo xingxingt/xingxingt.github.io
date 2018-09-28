@@ -11,19 +11,19 @@ tags:
 ---
 
 >
->SparkStreaming中的Dstream和DstreamGraBuffe篇
+>SparkStreaming中的Dstream和DstreamGraph篇
 > 
 
 
 ## 先谈DstreamGraph，
-#### 在DstreamGraph中有两个ArrayBuffer，
+在DstreamGraph中有两个ArrayBuffer，
     private val inputStreams = new ArrayBuffer[InputDStream[_]]()
     private val outputStreams = new ArrayBuffer[DStream[_]]()
     
-#### inputStreams的作用就是存放一个流的inputDstream，例如SocketInputDStream,他是在父类InputDSt中执行具体的存放操作
+inputStreams的作用就是存放一个流的inputDstream，例如SocketInputDStream,他是在父类InputDSt中执行具体的存放操作
 ![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0r8hs89ej314k0c674y.jpg)
 
-#### 那么InputDStream接收的数据又是如何进行存储的呢?
+那么InputDStream接收的数据又是如何进行存储的呢?
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rth3yb8j31cc12otal.jpg)
 ![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0rucb4l7j31be0ai0t3.jpg)
 #### 经过代码追踪发现接受的数据实际上是以block的形式存放，BlockGenerator以spark.streaming.blockInterval来生成block块，内部有一个Timer来定时生成block块：
