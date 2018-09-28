@@ -43,6 +43,6 @@ tags:
 ![](https://ws2.sinaimg.cn/large/006tNc79ly1fvp8zb6bixj31aw0mydgt.jpg)
 
 
-### 至此 JobScheduler角色的工作以叙述完成！
+### 至此 JobScheduler角色的工作以叙述完毕！
 
 
