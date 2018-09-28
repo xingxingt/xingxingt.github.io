@@ -38,4 +38,11 @@ tags:
 ### 看下jobHandler这个线程的run方法
 ![](https://ws2.sinaimg.cn/large/006tNc79ly1fvp8pl0l30j31kw122tch.jpg)
 
+### 看下最终的run方法,这个run方法执行的是job的输出代码的方法，例如print操作产生的job
+![](https://ws1.sinaimg.cn/large/006tNc79ly1fvp8r9h59gj310y0hm0tk.jpg)
+![](https://ws2.sinaimg.cn/large/006tNc79ly1fvp8zb6bixj31aw0mydgt.jpg)
+
+
+### 至此 JobScheduler角色的工作以叙述完成！
+
 
