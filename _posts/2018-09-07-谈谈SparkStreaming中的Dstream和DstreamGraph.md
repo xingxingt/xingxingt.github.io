@@ -37,7 +37,7 @@ tags:
 ![](https://ws1.sinaimg.cn/large/006tNc79ly1fvp27z5xixj31gi0byaan.jpg)
 
 
-#### 上面说了inputStream,接下来看下outputStream,outputStreams是通过定时器RecurringTimer来添加，那就再来看下这个定时器，RecurringTimer是在JobGneretor中进行实例化的
+#### 还有就是Dstream中outputStreamArray中的action是如何触发job的,其实在jobGenertor中通过定时器RecurringTimer来实现的，那就再来看下这个定时器，RecurringTimer是在JobGneretor中进行实例化的
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0rd9oep8j31hy058q34.jpg)
 
 #### 来看下RecurringTimer执行的内容
@@ -68,9 +68,8 @@ tags:
 ![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0sbwnnnrj31c80qgabc.jpg)
 #### 而foreachDStream中的compute方法为空,是因为foreachDStream是job中最后的Action操作，而generateJob内执行的执行发放foreachFunc中执行的还是RDD的输出操作；
 ![](https://ws2.sinaimg.cn/large/0069RVTdgy1fv0sdl5ytwj31gs0vkq4i.jpg)
-#### 在执行foreachRDD时将ForEachDStream register到DStreamGraph的outPutStream中
-![](https://ws4.sinaimg.cn/large/0069RVTdgy1fv0sf6xghpj30qu044glp.jpg)
-#### 而在这里定时器RecurringTimer不停的执行triggerActionForNextInterval的callback方法
+
+#### 在JobGenerator中,定时器RecurringTimer不停的执行triggerActionForNextInterval的callback方法
 ![](https://ws3.sinaimg.cn/large/0069RVTdgy1fv0sgg1rk5j30qw05wmxg.jpg)
 #### callback方法具体执行的就是DStreamGraph中的generateJobs方法，
 ![](https://ws1.sinaimg.cn/large/0069RVTdgy1fv0sh8e4d3j30qm0aegm8.jpg)
@@ -81,7 +80,7 @@ tags:
 
 #### 接下来就是将基于RDD产生的Job提交给cluster进行执行……………
 
-#### 总结:其实DStream只是基于RDD的一个抽象的模板，SparkStreaming最终做执行操作的还是SparkCore的RDD；
+#### 总结:其实DStream只是基于RDD的一个抽象的模板,而DstreamGreaph就是生成DAG的模板，最终每个Dstream都会生成一个以time为key，RDD[T]为value的数据结构用来存储基于模板生成的RDD，SparkStreaming最终做执行操作的还是SparkCore的RDD；
 
 
 
