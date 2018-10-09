@@ -66,7 +66,7 @@ ok!基于interval time生成的job就已经ok了，接下来就是如何将生�
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw20x55rmoj31i80mgwfx.jpg)
 
 
-
+#### OK! jobGenrator介绍完毕,其实比较重要的就是数据的分配和job的产生；
 
 
 
