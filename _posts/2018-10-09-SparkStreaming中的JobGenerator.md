@@ -26,9 +26,40 @@ tags:
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw1zbcyk62j31ie0w240k.jpg)
 这个是JobGenerator的start方法，在这个方法中实例化了一个消息循环体，并启动了这个消息循环体(EventLoop[JobGeneratorEvent])
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw1zcaean3j31ks0w20u1.jpg)
-其实在JobGenerator中有两个比较重要的成员，一个是定时器Timer，另一个是消息循环体EventLoop
+### JobGenerator内部探究
+其实在JobGenerator中有两个比较重要的成员，一个是定时器Timer，Timer根据Interval time不断向自己发送GenerateJobs消息，
+另一个是消息循环体EventLoop
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw1zgol1rvj31je0883yw.jpg)
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw1zh6t261j31iw05kglt.jpg)    
+再来看下消息循环体的具体内容
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw2032p852j31am0fet9r.jpg)
+我们主要看下generateJobs方法
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw204zd7o5j31k00ou40c.jpg)
+在allocateBlocksToBatch方法中获取根据interval time划分的block块数据
+
+    jobScheduler.receiverTracker.allocateBlocksToBatch(time) // allocate received blocks to batch
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw20bzi8kwj31hm104gny.jpg)
+在获取到属于该job的数据后开始产生job
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw20f77htij31ka0nojt8.jpg)
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw20gofb5nj316g0g2wfa.jpg)
+再向下看就是Dstream的generatorJob的方法了，其实这个方法会被子类的实现所覆盖，例如print操作产生的ForeachDstream
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw20i872a6j31c60o8jsl.jpg)
+Dstream的子类ForeachDstream实现方法,可见是通过从后向前回溯的方法来生成一个job，特别是Some(new Job(time, jobFunc))
+中的jobFunc方法，就是自定义的输出方法，可以去看下Dstream里面的Print方法是如何传入的
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw20kohhecj31cw0ds3z0.jpg)
+ok!基于interval time生成的job就已经ok了，接下来就是如何将生成的job向下传递了，根据代码可见，最后是将生成的job交给JobScheduler进行处理；
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw20omd7agj31hc0nsac0.jpg)
+
+***
+
+
+
+
+
+
+
+
+
 
 
 
