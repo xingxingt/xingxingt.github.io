@@ -52,8 +52,18 @@ ok!基于interval time生成的job就已经ok了，接下来就是如何将生�
 
 ***
 
+### 上面介绍了JobGenerator这个角色，接下来再引申一个问题，为什么SparkStreaming不会处理到半条数据的情况？
+    
+    原因有两点:
+    1，receiver接收数据是一条一条的接收的；
+    2，receive的接收数据，向driver端汇报数据，为batch分配数据这三者其实时间不是一致的
 
-
+    其实存在着这样的一种情况:
+    Batch1接收了1000条数据，batch2接收了500条数据，  在处理时会出现batch1处理了900条数据，batch2处理了600条数据；
+    原因：
+    在给job分配数据的时候使用了synchronized修饰，那么就会造成batch在分配数据时并不一定能分配1000条数；
+    所以revice接收到的这条数据分配给哪个batch是由何时获取锁的时间来决定的；
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw20x55rmoj31i80mgwfx.jpg)
 
 
 
