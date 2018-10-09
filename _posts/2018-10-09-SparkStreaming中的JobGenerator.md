@@ -54,7 +54,7 @@ ok!基于interval time生成的job就已经ok了，接下来就是如何将生�
 
 ### 上面介绍了JobGenerator这个角色，接下来再引申一个问题，为什么SparkStreaming不会处理到半条数据的情况？
     
-    原因有两点:
+    不会出现处理半条数据的原因有两点:
     1，receiver接收数据是一条一条的接收的；
     2，receive的接收数据，向driver端汇报数据，为batch分配数据这三者其实时间不是一致的
 
