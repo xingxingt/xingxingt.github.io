@@ -19,7 +19,8 @@ tags:
     以block的形式存储；
     
 ### ReceiverTracker的实例化和启动
-    ReceiverTracker是在JobScheduler的start方法中进行初始化和启动的，详细代码见下图;    
+    ReceiverTracker是在JobScheduler的start方法中进行初始化和启动的，详细代码见下图;
+
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw2z8mgh7bj31kw0vxjtg.jpg)
     
 ### ReceiverTracker的内部源码
