@@ -33,6 +33,7 @@ tags:
     分布到不同的worker节点上运行,而ReceiverInputDStreams就是DstreamGraph中的inputStreams，而
     runDummySparkJob()这个方法其实运行的就是一个空的job，它的目的就是为了能够让所有的slave节点注册进来
     从而能够获取到最多的资源，之后就用endPoint给自己发送StartAllReceivers的消息，详细源代码见下图:
+
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw351w4z4zj31260g8t99.jpg)   
     
     下面是StartAllReceivers消息体执行的详细内容，
