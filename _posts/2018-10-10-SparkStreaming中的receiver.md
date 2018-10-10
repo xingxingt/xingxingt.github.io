@@ -20,8 +20,7 @@ tags:
     
 ### ReceiverTracker的实例化和启动
     ReceiverTracker是在JobScheduler的start方法中进行初始化和启动的，详细代码见下图;
-
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fw2z8mgh7bj31kw0vxjtg.jpg)
+<br/>![](https://ws2.sinaimg.cn/large/006tNbRwly1fw2z8mgh7bj31kw0vxjtg.jpg)
     
 ### ReceiverTracker的内部源码
     从start方法入手，在这个方法里面，先实例化了一个消息循环体ReceiverTrackerEndpoint，然后在调用了
