@@ -74,9 +74,10 @@ tags:
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw37606iasj31kg0n00to.jpg)   
      
     我们再来看下receiver.onStart()具体的实现，还以SocketReceiver为列，可以看到receive方法中通过socket
-    一条一条的接收数据，并将接收到的数据做存储，其实存储就是存储在上面所说的currentBuffer中了，这样就衔接上了；
+    一条一条的接收数据，并将接收到的数据做存储，其实存储就是存储在上面所说的currentBuffer中了，这样就衔接上了，
+    reveiver不停的接受数据并存储在内存中，ReceiverSupervisor将内存中的数据转换成block并用blockManager存储；
  ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw3796cxrwj312g0a4q36.jpg)  
  ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw37afts3oj31ak13ggni.jpg)
      
  
-    
+ ####     
