@@ -46,19 +46,23 @@ tags:
        位置信息存放在receiverPreferredLocations数据结构中；
     6，调用startReceiver(receiver, executors)方法，启动receiver；
     详细源代码见下图:
+
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw35cnvhwwj31kc0dmgmf.jpg)
 
     进入startReceiver方法，该方法主要是启动一个receiver和对应的executor；
     查询源码可见，receiver是被封装成了一个rdd，然后以Job的形式通过SparkContext启动，并且用future监听这个reveiver 
     job的状态，因为每个job都是一个线程，一旦启动失败，或者执行异常都会重新发送self.send(RestartReceiver(receiver))
     消息给自己，重新启动该reveicer；
+
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw363ki62ij31eo14g77c.jpg)
 
     这个receiver rdd中重要的是startReceiverFunc这个方法，这个方法里面详细描述着receiver启动和它工作的内容，
     在这里它会实例化一个supervisor；
+
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw36daeznwj31bi0pimyg.jpg)    
     
     然后调用ReceiverSupervisor的start方法    
+
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw36h5ybs7j30vm07e0sp.jpg)   
 
     我们先看下ReceiverSupervisorImpl实现的onStart()方法，接着进入start方法，可以看到在start方法中做了两件事，
@@ -67,20 +71,23 @@ tags:
        中的数据转换成block，然后存储到blocksForPushing数据结构中；
     2，启动blockPushingThread，这个线程具体执行的方法是keepPushingBlocks()，在keepPushingBlocks()方法中
        将生成的block通过blockManager进行存储;
+
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw36js1psgj319u04s74c.jpg)   
 ![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw36l37x6uj31ii0h2wfa.jpg)
 ![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw36pef9wpj318o0wmmz2.jpg)
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw372ekuhhj31kw12rq58.jpg)
 
     ok，ReceiverSupervisor的onStart()方法介绍完毕了，回过头来再看下startReceiver()方法，在这个方法内启动了receiver；
+
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw37606iasj31kg0n00to.jpg)   
      
     我们再来看下receiver.onStart()具体的实现，还以SocketReceiver为列，可以看到receive方法中通过socket
     一条一条的接收数据，并将接收到的数据做存储，其实存储就是存储在上面所说的currentBuffer中了，这样就衔接上了，
     reveiver不停的接受数据并存储在内存中，ReceiverSupervisor将内存中的数据转换成block并用blockManager存
     储在内存或者磁盘中；
- ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw3796cxrwj312g0a4q36.jpg)  
- ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw37afts3oj31ak13ggni.jpg)
+
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw3796cxrwj312g0a4q36.jpg)  
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw37afts3oj31ak13ggni.jpg)
      
  
  #### 至此receiver介绍完毕；    
