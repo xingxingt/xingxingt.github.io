@@ -93,3 +93,39 @@ tags:
    
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4djkikklj31ja0pkgns.jpg)
 
+    具体的资源分配还是要看scheduleExecutorsOnWorkers(),进入该方法；
+    为应用程序分配Executor有两种方式：
+    第一种方式是尽可能在集群的所有节点的worker上分配Executor，这种方式往往会带来潜在的更好，有利于数据本地性，
+    第二种是尽量在一个节点的worker上分配Executor，这样的效率可想而知非常低下；
+    coresPerExecutor：每个Executor上分配的core;
+    minCoresPerExecutor:每个Executor最少分配的core数;
+    oneExecutorPerWorker:一个worker是否只启动一个Executor；
+    memoryPerExecutor:一个Executor分配到momery大小；
+    numUsable：可用的worker；    
+    assignedCores：指的是在某个worker上已经被分配了多少个cores；
+    assignedExecutors指的是已经被分配了多少个Executor；
+    coresToAssign：最少为Application分配的core数；
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw4g51rmzbj31ho0mi40b.jpg)   
+
+    canLaunchExecutor()此函数判断该worker上是否可以启动一个Executor；
+    首先要判断该worker上是否有充足的资源，usableWorkers(pos)代表一个worker；
+    接着判断在这个方法内如果允许在一个worker上启动多个Executor，那么他将总是启动新的Executor，否则，如果有之前启动
+    的Executor，就在这个Executor上不断的增加cores；如下代码所示：
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw4gdjvva9j31h60q4q4s.jpg)
+
+    接着看具体的执行方法，
+    利用canLaunchExecutor()过滤出numUsable中可用的worker；然后遍历每个worker，为每个worker上的Executor分配core；
+    这里有个参数spreadOutApps，如果在默认的情况下spreadOutApps=true它会每次给我们的Executor分配一个core；
+    
+        
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4gr8n0pzj31hi12kgof.jpg)
+
+    从下面的代码我们可以看出：
+    如果是每个worker下面只能够为当前的应用程序分配一个Executor的话，每次为这个executor只分配一个core！
+    在应用程序提交时指定每个Executor分配多个cores，其实在实际分配的时候没有什么用，因为在为每个Executor
+    分配core的时候是一个一个的分配的，但是指定的cores在前面做条件过滤时有用，只用在满足应用程序指定的资
+    源条件情况下才能进行分配；
+
+![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4gxbr16aj31eq0acwet.jpg)
