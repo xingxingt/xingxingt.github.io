@@ -20,7 +20,7 @@ tags:
 ### Master内部代码概览
     1,Master继承了ThreadSafeRpcEndpoint所以它本身也就是一个消息循环体，可以接受其他组件发送的消息并处理;
     2,在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息；
-    3,处理Master所管理的一下组件；参看下图源码：
+    3,处理Master所管理的一些组件；参看下图源码：
     
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw4a5x36w4j31ew0qw40x.jpg)    
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw4a7f443jj31kw05emxa.jpg)
@@ -54,5 +54,11 @@ tags:
 ![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4b6oajglj31du0xkdib.jpg)
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw4balje8ij31c20qm40g.jpg)
 
+### Master对资源组件状态变化的处理：
 
-
+     如下源码中对Driver状态的处理，先检查Driver的状态，如果Driver出现error,finished,killed,failed状态，
+     则将此Driver移除掉，在处理executor的状态变化时也是先检查executor的状态，然后在进行移除或者资源重分配的
+     操作；详细看下图源码：
+     
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw4c49p7t5j31i60be3yz.jpg)
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw4c4rtrnqj31j612edi7.jpg)
