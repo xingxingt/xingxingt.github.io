@@ -140,3 +140,13 @@ tags:
     
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
+
+    接下来看下launchDriver()方法，
+    1,worker.endpoint.send(LaunchExecutor(masterUrl.....
+    向worker发送一个LaunchExecutor消息，在worker中启动一个ExecutorRunner线程；
+    2,exec.application.driver.send(ExecutorAdded(exec.... 向driver中添加一个Executor；
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw4ky40g2cj31dw0bot9f.jpg) 
+
+
+#### 至此Master中的重要内容已经叙述完毕!
