@@ -19,7 +19,7 @@ tags:
     
 ### Master内部代码概览
     1,Master继承了ThreadSafeRpcEndpoint所以它本身也就是一个消息循环体，可以接受其他组件发送的消息并处理;
-    2,在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息；
+    2,在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息,例如注册的worker,application,Driver等；
     3,处理Master所管理的一些组件；参看下图源码：
     
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw4a5x36w4j31ew0qw40x.jpg)    
@@ -62,3 +62,21 @@ tags:
      
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw4c49p7t5j31i60be3yz.jpg)
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw4c4rtrnqj31j612edi7.jpg)
+
+
+###  资源调度分配
+
+    Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
+    Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待的Applications,
+    这个方法随时都要被调用，比如说Application的加入或者可用资源的变化
+    再看Schedule具体执行的内容:
+    1,先判断master的状态，如果不是alive状态，就什么都不做；
+    2,将注册进来的所有worker进行shuffle,随机打乱，以便做到负载均衡；
+    3,然后在打乱的worker中过滤掉状态不是alive的worker；
+    4,将waitingDrivers中的worker一个一个的在worker上启动；
+    5,启动Driver后才能启动executor；
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4cpiqe6aj31ho0ik3zu.jpg)  
+    
+    
+    
+
