@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      Spark Shuffle的理解
+title:      Spark源码之Shuffle
 subtitle:   Spark Shuffle的理解
 date:       2018-09-01
 author:     XINGXING
