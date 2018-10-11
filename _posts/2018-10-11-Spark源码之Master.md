@@ -65,7 +65,6 @@ tags:
 
 
 ###  资源调度分配
-
     Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
     Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待的Applications,
     这个方法随时都要被调用，比如说Application的加入或者可用资源的变化
@@ -75,8 +74,22 @@ tags:
     3,然后在打乱的worker中过滤掉状态不是alive的worker；
     4,将waitingDrivers中的worker一个一个的在worker上启动；
     5,启动Driver后才能启动executor；
+
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4cpiqe6aj31ho0ik3zu.jpg)  
     
-    
-    
+    接着看下Driver是如何启动的，在launchDriver()中向worker发送一个消息
+    worker.endpoint.send(LaunchDriver(driver.id, driver.desc))让woker启动一个driver线程;
+    Driver启动完成将该Driver的状态改为Running状态;
+
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw4cvui20gj31b60bcaaj.jpg)    
+![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4d12tqchj31fi0mugmk.jpg)
+
+    Ok,Driver启动完成后就可以启动Executor了，因为Executor是注册给Driver的，所以要先把Driver启动完毕；
+    接着我们进入startExecutorsOnWorkers()方法中，此方法的作用就是调度和启动Executor在worker上；
+    1,遍历等待分配资源的Application，并且过滤掉所有一些不需要继续分配资源的Application；
+    2,过滤掉状态不为alive和资源不足的worker，并根据资源大小对workers进行排序；
+    3,调用scheduleExecutorsOnWorkers()方法，指定executor是在哪些workers上启动，并返回一个为每个worker
+      指定cores的数组;
+   
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4djkikklj31ja0pkgns.jpg)
 
