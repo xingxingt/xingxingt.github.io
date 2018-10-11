@@ -118,14 +118,25 @@ tags:
     接着看具体的执行方法，
     利用canLaunchExecutor()过滤出numUsable中可用的worker；然后遍历每个worker，为每个worker上的Executor分配core；
     这里有个参数spreadOutApps，如果在默认的情况下spreadOutApps=true它会每次给我们的Executor分配一个core；
-    
-        
+    如果在默认的情况下（spreadOutApps=true）它会每次给我们的Executor分配一个core，但是如果spreadOutApps=false它也是
+	每次给我们的Executor分配一个core；
+    具体的算法：
+	如果是spreadOutApps=false则会不断循环使用当前worker上的这个Executor的所有freeCores；
+	实际上的工作原理：假如有四个worker，如果是spreadOutApps=true，它会在每个worker上启动一个Executor然后先循环一轮，
+	给每个woker上的Executor分配一个core，然后再次循环再给每个executor 分配一个core，依次循环分配;
+       
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4gr8n0pzj31hi12kgof.jpg)
 
-    从下面的代码我们可以看出：
+    从下面的代码其实我们可以看出：
     如果是每个worker下面只能够为当前的应用程序分配一个Executor的话，每次为这个executor只分配一个core！
     在应用程序提交时指定每个Executor分配多个cores，其实在实际分配的时候没有什么用，因为在为每个Executor
     分配core的时候是一个一个的分配的，但是指定的cores在前面做条件过滤时有用，只用在满足应用程序指定的资
     源条件情况下才能进行分配；
 
 ![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4gxbr16aj31eq0acwet.jpg)
+
+    上面scheduleExecutorsOnWorkers()方法中已经讲述了Executor在worker上分配的原则，并且会返回一个
+    每个worker上分配资源的数组assignedCores，接下来就可以根据这个资源分配的数组去为Executor分配资源，并且启动Executor；
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
