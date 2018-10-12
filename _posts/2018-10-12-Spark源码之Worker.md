@@ -65,3 +65,11 @@ tags:
     
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fw5a3gd6bsj31jk142q5p.jpg) 
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw5a9dp99vj31g20c8js2.jpg)
+
+### Woker的其他工作
+    在Worker还维护着Driver和Executor的变化，如下图所示：
+ 
+ ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw5ade254tj31ka08u74i.jpg)
+ 
+ 
+####  Worker
