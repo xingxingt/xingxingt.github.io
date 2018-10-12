@@ -30,3 +30,38 @@ tags:
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw59dv0qggj317e07o74g.jpg)
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw59f17r33j31ku05y0sx.jpg)
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw59igrfffj31i20viq4o.jpg)
+
+### Worker内部分析
+    还会从Woker的初始化和启动开始，如下代码所示:
+
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw59oipxelj31is0q40ud.jpg)
+    
+    再看Worker的启动onStart()方法,因为Worker是主动向Master注册的，所以在WorKer启动的方法内就直接
+    向Master注册；
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw59qdsovdj31j40mm75u.jpg) 
+
+    进入registerWithMaster() 方法，
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw59rwfxogj31fo0t4wg5.jpg)  
+
+    继续往下走,进入tryRegisterAllMasters()，为什么会有tryRegisterAllMasters()方法呢？因为如何Master是
+    HA的情况下就会出现多个Master，所以Worker要将它的信息注册给每个Master,在下面的代码中可见，在Worker里用了
+    一个线程池registerMasterThreadPool生成一条线程去与Master通信；
+   
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw59uf2e05j31i20met9t.jpg)   
+
+    继续进入registerWithMaster()方法，在这个方法内你会看到具体想Master发送的注册请求,以及对请求的响应状态的处理;
+    Worker向Master注册，在[Spark源码之Master中已经详细叙述过]，这里就不再累赘；
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw59z8apk1j31fs0iygmw.jpg) 
+
+    进入handleRegisterResponse()方法，看下具体是如何处理这些Worker向Master注册后的事件；
+    这个方法里处理的事件：
+    1,Worker向Master注册成功,在worker注册成功后会调用changeMaster(masterRef, masterWebUiUrl)将当前的Master
+      信息保存在Woker内部的数据结构中；
+    2,Worker向Master注册失败;
+    3,Master出现StandBy的情况;
+    
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fw5a3gd6bsj31jk142q5p.jpg) 
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw5a9dp99vj31g20c8js2.jpg)
