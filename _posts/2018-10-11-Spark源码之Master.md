@@ -20,11 +20,13 @@ tags:
 ### Master内部代码概览
     1,Master继承了ThreadSafeRpcEndpoint所以它本身也就是一个消息循环体，可以接受其他组件发送的消息并处理;
     2,在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息,例如注册的worker,application,Driver等；
-    3,处理Master所管理的一些组件；参看下图源码：
+    3,处理Master所管理的一些组件；
+    4,资源调度;   参看下图源码：
     
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw4a5x36w4j31ew0qw40x.jpg)    
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw4a7f443jj31kw05emxa.jpg)
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4aj0bfw1j31ec0najsh.jpg)
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw5717any0j31i80immy4.jpg)
 
 ### Master对其他组件的注册处理
     1，Master接受注册的对象主要是Worker，Driver，Application；而Excutor不会注册给master，Excutor是注册给Driver
