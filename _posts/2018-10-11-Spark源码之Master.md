@@ -68,7 +68,7 @@ tags:
 
 ###  资源调度分配
     Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
-    Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待的Applications,
+    Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待被分配资源的Applications,
     这个方法随时都要被调用，比如说Application的加入或者可用资源的变化
     再看Schedule具体执行的内容:
     1,先判断master的状态，如果不是alive状态，就什么都不做；
