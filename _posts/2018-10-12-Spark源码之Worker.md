@@ -72,5 +72,5 @@ tags:
  ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw5ade254tj31ka08u74i.jpg)
  
  
-####  Worker的源码内容叙述完毕!可参看下图:
+####  Worker的源码内容叙述完毕!Worker中的Driver和Executor分析流程部分可参看下图:
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fw5ft1y35mj31im0oyn2v.jpg)
