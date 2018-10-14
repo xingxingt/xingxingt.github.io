@@ -14,7 +14,6 @@ tags:
 >Spark源码之Executor&CoarseGrainedExecutorBackend介绍篇
 > 
 
-
 ### CoarseGrainedExecutorBackend和Executor的关系
     我们先说下CoarseGrainedExecutorBackend和Executor这两者的关系，CoarseGrainedExecutorBackend比较直观
     因为我们在启动Spark集群运行任务通过JPS命令,可以看到有一个CoarseGrainedExecutorBackend这样的进程，其实
