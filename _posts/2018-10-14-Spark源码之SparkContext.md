@@ -15,7 +15,8 @@ tags:
 > 
 
 ### SparkContext介绍
-    SparkContext作为spark的主入口类，SparkContext表示一个spark集群的链接,它会用在创建RDD,计数器以及广播变量在Spark集群；
+    SparkContext作为spark的主入口类，SparkContext表示一个spark集群的链接,它会用在创建RDD,计数器以及广播变量
+    在Spark集群；
     SparkContext特性:
     1,Spark的程序编写时基于SparkContext的，具体包括两方面:
       Spark编程的核心基础--RDD，是由SparkContext来最初创建（第一个RDD一定是由SparkContext来创建的）；
@@ -72,16 +73,16 @@ tags:
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8ycr5zt5j31he04o0sw.jpg)
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fw8yen1zd4j31km0s440f.jpg)
 
-    在SparkDeploySchedulerBackend的Start()方法中执行完super.start()后，进行一系列的参数配置后，就开始了Spark应用程序
-    的处理,如下图所示:
-    在这里实例化出APPClient对象,并调用client.start()方法,进入APPClient的start()方法,在这个方法里new了一个ClientEndpoint
-    实例,其实ClientEndpoint他也是一个消息循环体;
+    在SparkDeploySchedulerBackend的Start()方法中执行完super.start()后，进行一系列的参数配置后，就开始了Spark
+    应用程序的处理,如下图所示:
+    在这里实例化出APPClient对象,并调用client.start()方法,进入APPClient的start()方法,在这个方法里new了一个
+    ClientEndpoint实例,其实ClientEndpoint他也是一个消息循环体;
 
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8yqooo9fj31go0jkjta.jpg)
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8yw7h4hzj31fi06o0sx.jpg)
 
-    再看ClientEndpoint的onStart()方法的,这里有个重要的地方，之前我也很疑惑就是Application是如何注册给当前的集群中的master,
-    在onStart()中执行registerWithMaster(1)，向master注册Application;
+    再看ClientEndpoint的onStart()方法的,这里有个重要的地方，之前我也很疑惑就是Application是如何注册给当前的集群中的
+    master,在onStart()中执行registerWithMaster(1)，向master注册Application;
     如下图代码所示:
     这个跟worker向Master注册差不多，向每个Master发送RegisterApplication的消息,Master接收到注册消息并处理;
   
