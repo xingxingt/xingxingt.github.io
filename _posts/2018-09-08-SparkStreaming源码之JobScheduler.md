@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      谈谈SparkStreaming中的JobScheduler
-subtitle:   谈谈SparkStreaming中的JobScheduler
+title:      SparkStreaming源码之JobScheduler
+subtitle:   SparkStreaming源码之JobScheduler
 date:       2018-09-08
 author:     XINGXING
 header-img: img/post-bg-rwd.jpg
@@ -11,7 +11,7 @@ tags:
 ---
 
 >
->SparkStreaming中的JobScheduler篇
+>SparkStreaming源码之JobScheduler篇
 > 
 
 #### 首先看下JobScheduler这个类是在什么时候被实例化的，打开StreamingContext代码可见：
