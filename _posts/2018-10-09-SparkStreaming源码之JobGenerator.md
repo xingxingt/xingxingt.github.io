@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      谈谈SparkStreaming中的JobGenerator
-subtitle:   谈谈SparkStreaming中的JobGenerator
+title:      谈谈SparkStreaming源码之JobGenerator
+subtitle:   谈谈SparkStreaming源码之JobGenerator
 date:       2018-10-08
 author:     XINGXING
 header-img: img/post-bg-rwd.jpg
@@ -11,7 +11,7 @@ tags:
 ---
 
 >
->SparkStreaming中的JobGenerator篇
+>SparkStreaming源码之JobGenerator篇
 > 
 
 ### JobGenerator概述
