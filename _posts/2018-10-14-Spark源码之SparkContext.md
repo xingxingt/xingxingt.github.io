@@ -28,13 +28,16 @@ tags:
 ### SparkContext构建的三大核心对象
     SparkContext构建的顶级三大核心对象：DAGScheduler，TaskScheduler，ScheduleBackend；
     DAGScheduler是面向job的stage的高层调度器；
-    TaskScheduler是一个接口，根据具体的cluster manager的不同会有不同的实现，standalone模式下具体的实现是TaskSchedulerImpl;
-    SchedulerBackend是一个接口，根据具体的ClusterManager的不同会有不同的实现，Standalone模式下具体的实现是SparkDeploySchedulerBackend；
+    TaskScheduler是一个接口，根据具体的cluster manager的不同会有不同的实现，standalone模式下具体的实现
+    是TaskSchedulerImpl;
+    SchedulerBackend是一个接口，根据具体的ClusterManager的不同会有不同的实现，Standalone模式下具体的实现
+    是SparkDeploySchedulerBackend；
 
 ### 深入三大核心对象
     下面我们从源代码层面看下三大核心对象是如何在SparkContext中产生的；
-    根据下面代码可以看到DAGScheduler，TaskScheduler,ScheduleBackend在SparkContext内部的实例化,DAGScheduler在这里直接
-    实例化出来，而TaskScheduler,ScheduleBackend则在createTaskScheduler()方法中根据集群类型来实例化,因为这跟随后的任务调度有关;
+    根据下面代码可以看到DAGScheduler，TaskScheduler,ScheduleBackend在SparkContext内部的实例化,DAGScheduler
+    在这里直接实例化出来，而TaskScheduler,ScheduleBackend则在createTaskScheduler()方法中根据集群类型来实例化,
+    因为这跟随后的任务调度有关;
     
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw8wtvpns2j318a0g43zg.jpg)  
   
@@ -43,12 +46,53 @@ tags:
 
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw8wz0uu9lj31ho12itbb.jpg)
 
-    我们以Standalone模式为例讲解,参看下图源码，可见TaskScheduler实例的子类为TaskSchedulerImpl，SchedulerBackend的实例化的
-    子类是SparkDeploySchedulerBackend;
+    我们以Standalone模式为例讲解,参看下图源码，可见TaskScheduler实例的子类为TaskSchedulerImpl，SchedulerBackend的
+    实例化的子类是SparkDeploySchedulerBackend;
        
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw8x01u0foj31aa0aa3yx.jpg)    
 
-    我们随后会单独讲解TaskSchedulerImpl和DAGScheduler,现在我们先专注于SparkDeploySchedulerBackend，
+    我们随后会单独讲解TaskSchedulerImpl和DAGScheduler,现在我们先专注于SparkDeploySchedulerBackend；
+    SparkDeploySchedulerBackend核心功能:
+    1,负责与Master连接注册当前程序！
+	2,接收集群中为当前应用程序分配的计算资源，Executor的注册并且管理Executors！
+	3,负责发送Task到具体的Executor执行！
+    4,它的父类CoarseGrainedSchedulerBackend中的DriverEndpoint就是Spark应用程序中的Driver;
+    
+    我们进入SparkDeploySchedulerBackend代码中，首先看它的start()方法；
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw8y7mw9ayj31j011iq5t.jpg)
+    
+    在SparkDeploySchedulerBackend的Start()方法中，super.start()其实执行的是它的父类CoarseGrainedSchedulerBackend
+    的start方法，如下图代码所示,
+    可以看到执行了createDriverEndpoint(properties)方法，我们进入看下，在createDriverEndpoint()方法中实例化了一个
+    DriverEndpoint，而DriverEndpoint其实是一个消息循环体,其实这个DriverEndPoint就是Spark应用程序中的Driver，他内
+    部可以接收处理其他组件发来的消息；
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw8y9m1mvij31f80fkjs0.jpg)
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8ycr5zt5j31he04o0sw.jpg)
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw8yen1zd4j31km0s440f.jpg)
+
+    在SparkDeploySchedulerBackend的Start()方法中执行完super.start()后，进行一系列的参数配置后，就开始了Spark应用程序
+    的处理,如下图所示:
+    在这里实例化出APPClient对象,并调用client.start()方法,进入APPClient的start()方法,在这个方法里new了一个ClientEndpoint()
+    实例,其实ClientEndpoint他也是一个消息循环体;
+
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8yqooo9fj31go0jkjta.jpg)
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8yw7h4hzj31fi06o0sx.jpg)
+
+    再看ClientEndpoint的onStart()方法的,这里有个重要的地方，之前我也很疑惑就是Application是如何注册给当前的集群中的master，
+    在onStart()中执行registerWithMaster(1)，向master注册Application;
+    如下图代码所示:
+    这个跟worker向Master注册差不多，向每个Master发送RegisterApplication的消息,Master接收到注册消息并处理;
+  
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fw8zclo83ej31040ewq38.jpg)
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw8zeie575j31i00oo75p.jpg)
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fw8zh6gmcwj31h00raq4g.jpg)
+![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw8zo23vqmj318k0j0myc.jpg)
+
+    回过头来再看SparkDeploySchedulerBackend的Start()方法,具体完成了Driver的启动和Application的注册;
+    
+    
     
     
     
