@@ -104,7 +104,7 @@ tags:
     
     
 #### Ok,这里主要讲述了SparkContext内部的核心对象，以及Driver的生成和Application的注册;SparkContext的内容还是挺多的,随后慢慢添加；
-
+![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw93gdam07j31kw0kngmb.jpg)
     
     
     
