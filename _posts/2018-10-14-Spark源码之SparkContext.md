@@ -91,6 +91,16 @@ tags:
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw8zo23vqmj318k0j0myc.jpg)
 
     回过头来再看SparkDeploySchedulerBackend的Start()方法,具体完成了Driver的启动和Application的注册;
+    在Application提交时有个重要的地方，在appDesc中有个command,是这样的:
+    当通过SparkDeploySchedulerBackend注册程序给Master的时候会把上述command提交给master，master发指令给Worker
+    去启动Excutor所在的进程的时候加载main方法所在的入口类，就是command中的CoarseGrainedExcutorBackend，当然你也
+    可以自己实现excutorBackend！在CoarseGrainedExecutorBackend中启动Executor（Excutor是先注册再实例化的）,
+    Excutor通过线程池并发执行Task！关于Executor部分我们随后详细阐述；
+
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fw91zmte9ij31i20fkq4c.jpg)
+
+    
+    
     
     
     
