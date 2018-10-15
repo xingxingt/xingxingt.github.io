@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      谈谈SparkStreaming中的Dstream和DstreamGraph
-subtitle:   谈谈SparkStreaming中的Dstream和DstreamGraph这些魔板类
+title:      SparkStreaming源码之Dstream和DstreamGraph
+subtitle:   SparkStreaming源码之Dstream和DstreamGraph这些魔板类
 date:       2018-09-07
 author:     XINGXING
 header-img: img/post-bg-rwd.jpg
@@ -11,7 +11,7 @@ tags:
 ---
 
 >
->SparkStreaming中的Dstream和DstreamGraph篇
+>SparkStreaming源码之Dstream和DstreamGraph篇
 > 
 
 
