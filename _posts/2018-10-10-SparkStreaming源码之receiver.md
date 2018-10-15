@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      SparkStreaming中的receiver
-subtitle:   SparkStreaming中的receiver
+title:      SparkStreaming源码之receiver
+subtitle:   SparkStreaming源码之receiver
 date:       2018-10-10
 author:     XINGXING
 header-img: img/post-bg-rwd.jpg
@@ -11,7 +11,7 @@ tags:
 ---
 
 >
->SparkStreaming中的receiver篇
+>SparkStreaming源码之receiver篇
 > 
 
 ### ReceiverTracker简介
