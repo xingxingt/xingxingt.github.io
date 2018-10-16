@@ -27,8 +27,8 @@ tags:
     CoarseGrainedExecutorBackend这个类，如下图所示，Application在注册时把这个command也提交给了Master，
     master发指令给Worker去启动Excutor所在的进程的时候加载main方法所在的入口类，就是command中的
     CoarseGrainedExcutorBackend;
-
-
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwa369baktj31e80emmyl.jpg)    
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fwa33vgtr8j31ks10w0v8.jpg)
 
     Master在启动一个Excutor所在的进程的时候加载了CoarseGrainedExecutorBackend的main方法，我们进入main方法，
