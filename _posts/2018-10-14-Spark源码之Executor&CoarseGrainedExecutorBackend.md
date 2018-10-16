@@ -38,10 +38,23 @@ tags:
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw7lehyoi9j31hq13wabt.jpg)   
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fw7lhb3t8dj31kw0msq4o.jpg)    
 
+    CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法，在CoarseGrainedExecutorBackend启动
+    后就立即向Driver注册Executor,开始着手启动Executor如下图所示;
     
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwa39blzumj31a60o80ub.jpg)
+
+    打开Driver的源码,找到RegisterExecutor部分，如下图所示：
+    在Driver里面有一个数据结构executorDataMap，用于存储注册的Executor信息，先判断该Executor是否在该数据结构中存在，
+    如果不存在则继续往下执行，然后将Executor的信息存于各种数据结构中，接下来就是调用通知CoarseGrainedExecutorBackend
+    注册Executor成功，再调用makeOffers()方法。makeOffers()方法主要是给Executor分配资源，并且启动Task任务,Task的内
+    容会在TaskScheduler部分叙述,我们在这里暂且不过多讲述;
+        
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fwa3hlilyvj31e01600vs.jpg)
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fwa4yqfrcbj31fs0ea0te.jpg)
+
+    如下图所示，CoarseGrainedExecutorBackend在接到RegisteredExecutor消息后立即实例化了一个executor对象
     
-
-
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fwa4tmpwgcj31g6076wet.jpg)    
 
 #### 需要注意的是,我们现在主要说的是spark的StandAlone模式;
 
