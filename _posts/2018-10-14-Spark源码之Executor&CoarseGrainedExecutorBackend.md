@@ -56,6 +56,5 @@ tags:
     
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fwa4tmpwgcj31g6076wet.jpg)    
 
-#### 需要注意的是,我们现在主要说的是spark的StandAlone模式;
-
-
+#### 需要注意的是,我们现在主要说的是spark的StandAlone模式;CoarseGrainedExecutorBackend进程的产生和Executor对象的实例化都阐述完毕，最后放出这篇的分析图：
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwa5cpgiv5j31kw0eyte9.jpg)
