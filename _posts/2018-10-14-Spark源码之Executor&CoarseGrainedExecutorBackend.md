@@ -29,7 +29,7 @@ tags:
     CoarseGrainedExcutorBackend;
 
 ![](https://ws3.sinaimg.cn/large/006tNbRwgy1fwa25yznh3j31j80f4ta4.jpg)
-![](https://ws3.sinaimg.cn/large/006tNbRwgy1fwa2ctely4j31ie10wmzm.jpg)
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fwa33vgtr8j31ks10w0v8.jpg)
 
     Master在启动一个Excutor所在的进程的时候加载了CoarseGrainedExecutorBackend的main方法，我们进入main方法，
     先进行进行了一系列的参数初始化之后进入了run()方法，在run()方法中进行环境参数配置后启动RPC通信，并且实例化出
