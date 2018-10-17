@@ -369,18 +369,18 @@ Ok,Driver启动完成后就可以启动Executor了，因为Executor是注册给D
 ```
 
 
-具体的资源分配还是要看scheduleExecutorsOnWorkers(),进入该方法；
-为应用程序分配Executor有两种方式：
-第一种方式是尽可能在集群的所有节点的worker上分配Executor，这种方式往往会带来潜在的更好，有利于数据本地性，
-第二种是尽量在一个节点的worker上分配Executor，这样的效率可想而知非常低下；
-coresPerExecutor：每个Executor上分配的core;
-minCoresPerExecutor:每个Executor最少分配的core数;
-oneExecutorPerWorker:一个worker是否只启动一个Executor；
-memoryPerExecutor:一个Executor分配到momery大小；
-numUsable：可用的worker；    
-assignedCores：指的是在某个worker上已经被分配了多少个cores；
-assignedExecutors指的是已经被分配了多少个Executor；
-coresToAssign：最少为Application分配的core数；
+具体的资源分配还是要看scheduleExecutorsOnWorkers(),进入该方法；  
+为应用程序分配Executor有两种方式：  
+第一种方式是尽可能在集群的所有节点的worker上分配Executor，这种方式往往会带来潜在的更好，有利于数据本地性，  
+第二种是尽量在一个节点的worker上分配Executor，这样的效率可想而知非常低下；  
+coresPerExecutor：每个Executor上分配的core;  
+minCoresPerExecutor:每个Executor最少分配的core数;  
+oneExecutorPerWorker:一个worker是否只启动一个Executor；  
+memoryPerExecutor:一个Executor分配到momery大小；  
+numUsable：可用的worker；      
+assignedCores：指的是在某个worker上已经被分配了多少个cores；  
+assignedExecutors指的是已经被分配了多少个Executor；  
+coresToAssign：最少为Application分配的core数；  
 
 ```scala
   private def scheduleExecutorsOnWorkers(
