@@ -76,8 +76,8 @@ Master作为资源管理和分配的组件，所以今天我们重点来看Spark
 ```
 
 ### Master对其他组件的注册处理
-1. Master接受注册的对象主要是Worker，Driver，Application；而Excutor不会注册给master，Excutor是注册给Driver中的SchedulerBackend的；
-2. 再者Worker是再启动后主动向Master注册的，所以如果生产环境中加入新的worker到正在运行的spark集群中，此时不需要重新启动spark集群就能够使用新加入的worker，以提升处理能力；
+1,Master接受注册的对象主要是Worker，Driver，Application；而Excutor不会注册给master，Excutor是注册给Driver中的SchedulerBackend的；  
+2,再者Worker是再启动后主动向Master注册的，所以如果生产环境中加入新的worker到正在运行的spark集群中，此时不需要重新启动spark集群就能够使用新加入的worker，以提升处理能力；  
 
 我们以Worker注册为例，
 Master在接收到worker注册到的请求后，首先会判断一下当前的master是否是standby模式，如果是就不处理；
@@ -144,9 +144,9 @@ Master如果决定接受注册的worker，首先会创建WorkerInfo对象来保�
   }
 ```
     
-1. 如果registerWoker成功，则将worker信息进行持久化，可以将worker信息持久化在zookeeper中,或者系统文件(fileSystem),用户自定义的文件persistenceEngine中，以便于处理灾难后的数据恢复； 
-2. worker信息持久化后遍回复worker完成注册的消息；
-3. 接着进行schudule，给worker分配资源，schudule我们单独分析；
+1,如果registerWoker成功，则将worker信息进行持久化，可以将worker信息持久化在zookeeper中,或者系统文件(fileSystem),用户自定义的文件persistenceEngine中，以便于处理灾难后的数据恢复；   
+2,worker信息持久化后遍回复worker完成注册的消息；  
+3,接着进行schudule，给worker分配资源，schudule我们单独分析；  
 参看下面两段代码：
 
 ```scala
@@ -274,7 +274,7 @@ Master如果决定接受注册的worker，首先会创建WorkerInfo对象来保�
 
 
 ###  资源调度分配
- Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
+Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
 Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待被分配资源的Applications,这个方法随时都要被调用，比如说Application的加入或者可用资源的变化；
 再看Schedule具体执行的内容:
 1. 先判断master的状态，如果不是alive状态，就什么都不做；
@@ -338,10 +338,10 @@ Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资
 
 
 Ok,Driver启动完成后就可以启动Executor了，因为Executor是注册给Driver的，所以要先把Driver启动完毕；
-接着我们进入startExecutorsOnWorkers()方法中，此方法的作用就是调度和启动Executor在worker上；
-1. 遍历等待分配资源的Application，并且过滤掉所有一些不需要继续分配资源的Application；
-2. 过滤掉状态不为alive和资源不足的worker，并根据资源大小对workers进行排序；
-3. 调用scheduleExecutorsOnWorkers()方法，指定executor是在哪些workers上启动，并返回一个为每个worker指定cores的数组;
+接着我们进入startExecutorsOnWorkers()方法中，此方法的作用就是调度和启动Executor在worker上；  
+1,遍历等待分配资源的Application，并且过滤掉所有一些不需要继续分配资源的Application；  
+2,过滤掉状态不为alive和资源不足的worker，并根据资源大小对workers进行排序；  
+3,调用scheduleExecutorsOnWorkers()方法，指定executor是在哪些workers上启动，并返回一个为每个worker指定cores的数组;  
  
 ```scala
   /**
