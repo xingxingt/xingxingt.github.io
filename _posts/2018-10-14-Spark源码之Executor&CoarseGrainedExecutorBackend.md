@@ -187,6 +187,7 @@ CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法�
       val workOffers = activeExecutors.map { case (id, executorData) =>
         new WorkerOffer(id, executorData.executorHost, executorData.freeCores)
       }.toSeq
+      //启动Task
       launchTasks(scheduler.resourceOffers(workOffers))
     }
 ```
