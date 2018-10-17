@@ -73,5 +73,20 @@ tags:
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fwb00ckoawj31f006aq37.jpg)
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fwb018bh0qj31dk10kwg9.jpg)
      
-     
-     
+    经过一番折腾后我们再回到handleJobSubmitted方法,现在我们已经获取到了该job的ResultStage，和该ResultStage的父
+    stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()
+    方法，这个我们在接下来的submitStage方法中讲述，源代码如下图所示:
+    
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fwb19lz1c1j31im0pqq4q.jpg)
+
+    接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，将检查是否有缺失的stage,如果
+    有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，
+    该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的
+    partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接
+    返回，若获取不到：如果RDD的存储级别为空返回nil；
+    
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fwb1jbm6xvj31iq0u075s.jpg)
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fwb2gwuwmfj319i14ywgh.jpg)
+    
+    
+    
