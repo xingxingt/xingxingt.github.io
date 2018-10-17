@@ -43,7 +43,7 @@ tags:
     在DAGSchedulerEventProcessLoop中已经被重写，而在onReceive方法中调用doOnReceive方法做具体的事件处理;
 
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwaf5bggkzj31ee04i3yl.jpg)
-![](https://ws3.sinaimg.cn/large/006tNbRwgy1fwaf5xu6kcj31es0qy3zy.jpg)
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fwaz79gvz9j31kw0yvtau.jpg)
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fwaz67tr1dj31km14075x.jpg)
 
 
