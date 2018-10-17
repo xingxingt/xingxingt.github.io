@@ -76,8 +76,8 @@ Master作为资源管理和分配的组件，所以今天我们重点来看Spark
 ```
 
 ### Master对其他组件的注册处理
-1，Master接受注册的对象主要是Worker，Driver，Application；而Excutor不会注册给master，Excutor是注册给Driver中的SchedulerBackend的；
-2，再者Worker是再启动后主动向Master注册的，所以如果生产环境中加入新的worker到正在运行的spark集群中，此时不需要重新启动spark集群就能够使用新加入的worker，以提升处理能力；
+1. Master接受注册的对象主要是Worker，Driver，Application；而Excutor不会注册给master，Excutor是注册给Driver中的SchedulerBackend的；
+2. 再者Worker是再启动后主动向Master注册的，所以如果生产环境中加入新的worker到正在运行的spark集群中，此时不需要重新启动spark集群就能够使用新加入的worker，以提升处理能力；
 
 我们以Worker注册为例，
 Master在接收到worker注册到的请求后，首先会判断一下当前的master是否是standby模式，如果是就不处理；
