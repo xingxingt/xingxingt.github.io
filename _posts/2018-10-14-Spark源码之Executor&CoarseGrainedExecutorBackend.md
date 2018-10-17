@@ -115,7 +115,7 @@ Master在启动一个Excutor所在的进程的时候加载了CoarseGrainedExecut
 ```
 
 
-CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法，在CoarseGrainedExecutorBackend启动后就立即向Driver注册,如下图所示;
+CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法，在CoarseGrainedExecutorBackend启动后就立即向Driver注册,如下源代码所示;
 
 ```scala
   override def onStart() {
@@ -191,7 +191,7 @@ CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法�
     }
 ```
 
-如下图所示，CoarseGrainedExecutorBackend在接到RegisteredExecutor消息后立即实例化了一个executor对象;
+如源代码所示，CoarseGrainedExecutorBackend在接到RegisteredExecutor消息后立即实例化了一个executor对象;
 
 ```scala
   override def receive: PartialFunction[Any, Unit] = {
