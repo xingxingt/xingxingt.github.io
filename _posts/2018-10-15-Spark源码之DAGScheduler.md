@@ -295,9 +295,7 @@ ResultStage的所有父stage，然后在new出一个ResultStage实例来;
   }
 ```
      
-经过一番折腾后我们再回到handleJobSubmitted方法,现在我们已经获取到了该job的ResultStage，和该ResultStage的父
-stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()
-方法，这个我们在接下来的submitStage方法中讲述，源代码如下所示:
+经过一番折腾后我们再回到handleJobSubmitted方法,现在我们已经获取到了该job的ResultStage，和该ResultStage的父stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()方法，这个我们在接下来的submitStage方法中讲述，源代码如下所示:
     
 ```scala
  val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
@@ -321,11 +319,7 @@ stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的�
     submitWaitingStages()
 ```
 
-接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，将检查是否有缺失的stage,如果
-有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，
-该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的
-partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接
-返回，若获取不到：如果RDD的存储级别为空返回nil；
+接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，这个方法用于获取stage未执行的Parent Stage,如果有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接返回，若获取不到：如果RDD的存储级别为空返回nil；
     
 ```scala
  /** Submits stage, but first recursively submits any missing parents. */
@@ -386,5 +380,125 @@ private def getMissingParentStages(stage: Stage): List[Stage] = {
 ```
 
 在处理完`getMissingParentStages()`方法后，便调用`submitMissingTasks()`方法，在这个方法里面便是提交Task了,下面我们便详细分析这个方法;
+1. 首先获取到该stage的partition，并将该stage放入到runningStages数据结构中;
+2. 接着获取task的数据本地性;
+3. 根据stage的类型生成相应类型的Task对象(ShuffleMapTask/ResultTask);
+4. 将生成的TaskSet提交给taskScheduler，至此DAGScheduler的工作结束;
 
+```scala
+  private def submitMissingTasks(stage: Stage, jobId: Int) {
+    logDebug("submitMissingTasks(" + stage + ")")
+    // Get our pending tasks and remember them in our pendingTasks entry
+    stage.pendingPartitions.clear()
+
+    // First figure out the indexes of partition ids to compute.
+    //todo 获取该stage的partition
+    val partitionsToCompute: Seq[Int] = stage.findMissingPartitions()
+    
+    // Use the scheduling pool, job group, description, etc. from an ActiveJob associated
+    // with this Stage
+    val properties = jobIdToActiveJob(jobId).properties
+    //todo 将该stage加入到runningStages中
+    runningStages += stage
+    
+    //todo 获取task的数据本地性
+    val taskIdToLocations: Map[Int, Seq[TaskLocation]] = try {
+      stage match {
+        case s: ShuffleMapStage =>
+          partitionsToCompute.map { id => (id, getPreferredLocs(stage.rdd, id))}.toMap
+        case s: ResultStage =>
+          val job = s.activeJob.get
+          partitionsToCompute.map { id =>
+            val p = s.partitions(id)
+            (id, getPreferredLocs(stage.rdd, p))
+          }.toMap
+      }
+    } catch {
+      case NonFatal(e) =>
+        stage.makeNewStageAttempt(partitionsToCompute.size)
+        listenerBus.post(SparkListenerStageSubmitted(stage.latestInfo, properties))
+        abortStage(stage, s"Task creation failed: $e\n${e.getStackTraceString}", Some(e))
+        runningStages -= stage
+        return
+    }
+    
+    //TODO 根据stage的类型 生成相应类型的Task
+    val tasks: Seq[Task[_]] = try {
+      stage match {
+        case stage: ShuffleMapStage =>
+          partitionsToCompute.map { id =>
+            val locs = taskIdToLocations(id)
+            val part = stage.rdd.partitions(id)
+            new ShuffleMapTask(stage.id, stage.latestInfo.attemptId,
+              taskBinary, part, locs, stage.internalAccumulators)
+          }
+
+        case stage: ResultStage =>
+          val job = stage.activeJob.get
+          partitionsToCompute.map { id =>
+            val p: Int = stage.partitions(id)
+            val part = stage.rdd.partitions(p)
+            val locs = taskIdToLocations(id)
+            new ResultTask(stage.id, stage.latestInfo.attemptId,
+              taskBinary, part, locs, id, stage.internalAccumulators)
+          }
+      }
+    } catch {
+      case NonFatal(e) =>
+        abortStage(stage, s"Task creation failed: $e\n${e.getStackTraceString}", Some(e))
+        runningStages -= stage
+        return
+    }
+    
+     if (tasks.size > 0) {
+      logInfo("Submitting " + tasks.size + " missing tasks from " + stage + " (" + stage.rdd + ")")
+      stage.pendingPartitions ++= tasks.map(_.partitionId)
+      logDebug("New pending partitions: " + stage.pendingPartitions)
+      //todo 将taskSet提交给taskScheduler
+      taskScheduler.submitTasks(new TaskSet(
+        tasks.toArray, stage.id, stage.latestInfo.attemptId, jobId, properties))
+      stage.latestInfo.submissionTime = Some(clock.getTimeMillis())
+    } else {
+      // Because we posted SparkListenerStageSubmitted earlier, we should mark
+      // the stage as completed here in case there are no tasks to run
+      markStageAsFinished(stage, None)
+
+      val debugString = stage match {
+        case stage: ShuffleMapStage =>
+          s"Stage ${stage} is actually done; " +
+            s"(available: ${stage.isAvailable}," +
+            s"available outputs: ${stage.numAvailableOutputs}," +
+            s"partitions: ${stage.numPartitions})"
+        case stage : ResultStage =>
+          s"Stage ${stage} is actually done; (partitions: ${stage.numPartitions})"
+      }
+      logDebug(debugString)
+    }
+  }
+
+```
+
+关于task获取数据的本地性，这里单独说明一下，在调用`getPreferredLocs()`方法获取数据本地性，紧接着进入`getPreferredLocsInternal()`可以发现，其实这里使用了RDD的preferredLocations来获取的，可见spark内部是如何的"偷懒";
+```scala
+ private def getPreferredLocsInternal(
+      rdd: RDD[_],
+      partition: Int,
+      visited: HashSet[(RDD[_], Int)]): Seq[TaskLocation] = {
+    // If the partition has already been visited, no need to re-visit.
+    // This avoids exponential path exploration.  SPARK-695
+    if (!visited.add((rdd, partition))) {
+      // Nil has already been returned for previously visited partitions.
+      return Nil
+    }
+    // If the partition is cached, return the cache locations
+    val cached = getCacheLocs(rdd)(partition)
+    if (cached.nonEmpty) {
+      return cached
+    }
+    // If the RDD has some placement preferences (as is the case for input RDDs), get those
+    val rddPrefs = rdd.preferredLocations(rdd.partitions(partition)).toList
+    if (rddPrefs.nonEmpty) {
+      return rddPrefs.map(TaskLocation(_))
+    }
+```
     
