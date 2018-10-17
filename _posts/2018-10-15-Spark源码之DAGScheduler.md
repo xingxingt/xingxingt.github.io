@@ -509,3 +509,4 @@ private def getMissingParentStages(stage: Stage): List[Stage] = {
     }
 ```
     
+#### 至此DAGScheduler叙述完毕，主要是DAGScheduler内如何处理划分stage的,又如何生成Task，最后将生成的TaskSet提交给TaskScheduler的；
