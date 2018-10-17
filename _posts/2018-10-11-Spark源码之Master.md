@@ -210,57 +210,193 @@ Master如果决定接受注册的worker，首先会创建WorkerInfo对象来保�
 
 ### Master对资源组件状态变化的处理：
 
-     如下源码中对Driver状态的处理，先检查Driver的状态，如果Driver出现error,finished,killed,failed状态，
-     则将此Driver移除掉，在处理executor的状态变化时也是先检查executor的状态，然后在进行移除或者资源重分配的
-     操作；详细看下图源码：
-     
-![](https://ws4.sinaimg.cn/large/006tNbRwly1fw4c49p7t5j31i60be3yz.jpg)
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fw4c4rtrnqj31j612edi7.jpg)
+如下源码中对Driver状态的处理，先检查Driver的状态，如果Driver出现error,finished,killed,failed状态，则将此Driver移除掉，在处理executor的状态变化时也是先检查executor的状态，然后在进行移除或者资源重分配的操作；详细看下图源码：
+
+```scala
+    //对Driver状态的变化处理
+    case DriverStateChanged(driverId, state, exception) => {
+      state match {
+        case DriverState.ERROR | DriverState.FINISHED | DriverState.KILLED | DriverState.FAILED =>
+          removeDriver(driverId, state, exception)
+        case _ =>
+          throw new Exception(s"Received unexpected state update for driver $driverId: $state")
+      }
+    }
+    
+    //对Executor状态变化的处理
+    case ExecutorStateChanged(appId, execId, state, message, exitStatus) => {
+      val execOption = idToApp.get(appId).flatMap(app => app.executors.get(execId))
+      execOption match {
+        case Some(exec) => {
+          val appInfo = idToApp(appId)
+          val oldState = exec.state
+          exec.state = state
+
+          if (state == ExecutorState.RUNNING) {
+            assert(oldState == ExecutorState.LAUNCHING,
+              s"executor $execId state transfer from $oldState to RUNNING is illegal")
+            appInfo.resetRetryCount()
+          }
+
+          exec.application.driver.send(ExecutorUpdated(execId, state, message, exitStatus))
+
+          if (ExecutorState.isFinished(state)) {
+            // Remove this executor from the worker and app
+            logInfo(s"Removing executor ${exec.fullId} because it is $state")
+            // If an application has already finished, preserve its
+            // state to display its information properly on the UI
+            if (!appInfo.isFinished) {
+              appInfo.removeExecutor(exec)
+            }
+            exec.worker.removeExecutor(exec)
+
+            val normalExit = exitStatus == Some(0)
+            // Only retry certain number of times so we don't go into an infinite loop.
+            if (!normalExit) {
+              if (appInfo.incrementRetryCount() < ApplicationState.MAX_NUM_RETRY) {
+                schedule()
+              } else {
+                val execs = appInfo.executors.values
+                if (!execs.exists(_.state == ExecutorState.RUNNING)) {
+                  logError(s"Application ${appInfo.desc.name} with ID ${appInfo.id} failed " +
+                    s"${appInfo.retryCount} times; removing it")
+                  removeApplication(appInfo, ApplicationState.FAILED)
+                }
+              }
+            }
+          }
+        }
+        case None =>
+          logWarning(s"Got status update for unknown executor $appId/$execId")
+      }
+    }    
+```
 
 
 ###  资源调度分配
-    Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
-    Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待被分配资源的Applications,
-    这个方法随时都要被调用，比如说Application的加入或者可用资源的变化
-    再看Schedule具体执行的内容:
-    1,先判断master的状态，如果不是alive状态，就什么都不做；
-    2,将注册进来的所有worker进行shuffle,随机打乱，以便做到负载均衡；
-    3,然后在打乱的worker中过滤掉状态不是alive的worker；
-    4,将waitingDrivers中的worker一个一个的在worker上启动；
-    5,启动Driver后才能启动executor；
+ Master中的资源分配尤为重要，所以我们着重查探Master是如何进行资源的调度分配的；
+Master中的Schedule()方法就是用于资源分配，Schedule()将可用的资源分配给等待被分配资源的Applications,这个方法随时都要被调用，比如说Application的加入或者可用资源的变化；
+再看Schedule具体执行的内容:
+1. 先判断master的状态，如果不是alive状态，就什么都不做；
+2. 将注册进来的所有worker进行shuffle,随机打乱，以便做到负载均衡；
+3. 然后在打乱的worker中过滤掉状态不是alive的worker；
+4. 将waitingDrivers中的worker一个一个的在worker上启动；
+5. 启动Driver后才能启动executor；
 
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4cpiqe6aj31ho0ik3zu.jpg)  
+```scala
+  /**
+   * Schedule the currently available resources among waiting apps. This method will be called
+   * every time a new app joins or resource availability changes.
+   */
+  private def schedule(): Unit = {
+    if (state != RecoveryState.ALIVE) { return }
+    // Drivers take strict precedence over executors
+    val shuffledWorkers = Random.shuffle(workers) // Randomization helps balance drivers
+    for (worker <- shuffledWorkers if worker.state == WorkerState.ALIVE) {
+      for (driver <- waitingDrivers) {
+        if (worker.memoryFree >= driver.desc.mem && worker.coresFree >= driver.desc.cores) {
+          launchDriver(worker, driver)
+          waitingDrivers -= driver
+        }
+      }
+    }
+    startExecutorsOnWorkers()
+  }
+```
     
-    接着看下Driver是如何启动的，在launchDriver()中向worker发送一个消息
-    worker.endpoint.send(LaunchDriver(driver.id, driver.desc))让woker启动一个driver线程;
-    Driver启动完成将该Driver的状态改为Running状态;
+接着看下Driver是如何启动的，在launchDriver()中向worker发送一个消息`worker.endpoint.send(LaunchDriver(driver.id, driver.desc))`让woker启动一个driver线程;Driver启动完成将该Driver的状态改为Running状态;
 
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fw4cvui20gj31b60bcaaj.jpg)    
-![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4d12tqchj31fi0mugmk.jpg)
+```scala
+  private def launchDriver(worker: WorkerInfo, driver: DriverInfo) {
+    logInfo("Launching driver " + driver.id + " on worker " + worker.id)
+    worker.addDriver(driver)
+    driver.worker = Some(worker)
+    worker.endpoint.send(LaunchDriver(driver.id, driver.desc))
+    driver.state = DriverState.RUNNING
+  }
+```
+```scala
+    //worker接收到的LaunchDriver消息
+    case LaunchDriver(driverId, driverDesc) => {
+      logInfo(s"Asked to launch driver $driverId")
+      val driver = new DriverRunner(
+        conf,
+        driverId,
+        workDir,
+        sparkHome,
+        driverDesc.copy(command = Worker.maybeUpdateSSLSettings(driverDesc.command, conf)),
+        self,
+        workerUri,
+        securityMgr)
+      drivers(driverId) = driver
+      driver.start()
 
-    Ok,Driver启动完成后就可以启动Executor了，因为Executor是注册给Driver的，所以要先把Driver启动完毕；
-    接着我们进入startExecutorsOnWorkers()方法中，此方法的作用就是调度和启动Executor在worker上；
-    1,遍历等待分配资源的Application，并且过滤掉所有一些不需要继续分配资源的Application；
-    2,过滤掉状态不为alive和资源不足的worker，并根据资源大小对workers进行排序；
-    3,调用scheduleExecutorsOnWorkers()方法，指定executor是在哪些workers上启动，并返回一个为每个worker
-      指定cores的数组;
-   
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4djkikklj31ja0pkgns.jpg)
+      coresUsed += driverDesc.cores
+      memoryUsed += driverDesc.mem
+    }
+```
 
-    具体的资源分配还是要看scheduleExecutorsOnWorkers(),进入该方法；
-    为应用程序分配Executor有两种方式：
-    第一种方式是尽可能在集群的所有节点的worker上分配Executor，这种方式往往会带来潜在的更好，有利于数据本地性，
-    第二种是尽量在一个节点的worker上分配Executor，这样的效率可想而知非常低下；
-    coresPerExecutor：每个Executor上分配的core;
-    minCoresPerExecutor:每个Executor最少分配的core数;
-    oneExecutorPerWorker:一个worker是否只启动一个Executor；
-    memoryPerExecutor:一个Executor分配到momery大小；
-    numUsable：可用的worker；    
-    assignedCores：指的是在某个worker上已经被分配了多少个cores；
-    assignedExecutors指的是已经被分配了多少个Executor；
-    coresToAssign：最少为Application分配的core数；
-    
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fw4g51rmzbj31ho0mi40b.jpg)   
+
+Ok,Driver启动完成后就可以启动Executor了，因为Executor是注册给Driver的，所以要先把Driver启动完毕；
+接着我们进入startExecutorsOnWorkers()方法中，此方法的作用就是调度和启动Executor在worker上；
+1. 遍历等待分配资源的Application，并且过滤掉所有一些不需要继续分配资源的Application；
+2. 过滤掉状态不为alive和资源不足的worker，并根据资源大小对workers进行排序；
+3. 调用scheduleExecutorsOnWorkers()方法，指定executor是在哪些workers上启动，并返回一个为每个worker指定cores的数组;
+ 
+```scala
+  /**
+   * Schedule and launch executors on workers
+   */
+  private def startExecutorsOnWorkers(): Unit = {
+    // Right now this is a very simple FIFO scheduler. We keep trying to fit in the first app
+    // in the queue, then the second app, etc.
+    for (app <- waitingApps if app.coresLeft > 0) {
+      val coresPerExecutor: Option[Int] = app.desc.coresPerExecutor
+      // Filter out workers that don't have enough resources to launch an executor
+      val usableWorkers = workers.toArray.filter(_.state == WorkerState.ALIVE)
+        .filter(worker => worker.memoryFree >= app.desc.memoryPerExecutorMB &&
+          worker.coresFree >= coresPerExecutor.getOrElse(1))
+        .sortBy(_.coresFree).reverse
+      val assignedCores = scheduleExecutorsOnWorkers(app, usableWorkers, spreadOutApps)
+
+      // Now that we've decided how many cores to allocate on each worker, let's allocate them
+      for (pos <- 0 until usableWorkers.length if assignedCores(pos) > 0) {
+        allocateWorkerResourceToExecutors(
+          app, assignedCores(pos), coresPerExecutor, usableWorkers(pos))
+      }
+    }
+  }
+```
+
+
+具体的资源分配还是要看scheduleExecutorsOnWorkers(),进入该方法；
+为应用程序分配Executor有两种方式：
+第一种方式是尽可能在集群的所有节点的worker上分配Executor，这种方式往往会带来潜在的更好，有利于数据本地性，
+第二种是尽量在一个节点的worker上分配Executor，这样的效率可想而知非常低下；
+coresPerExecutor：每个Executor上分配的core;
+minCoresPerExecutor:每个Executor最少分配的core数;
+oneExecutorPerWorker:一个worker是否只启动一个Executor；
+memoryPerExecutor:一个Executor分配到momery大小；
+numUsable：可用的worker；    
+assignedCores：指的是在某个worker上已经被分配了多少个cores；
+assignedExecutors指的是已经被分配了多少个Executor；
+coresToAssign：最少为Application分配的core数；
+
+```scala
+  private def scheduleExecutorsOnWorkers(
+      app: ApplicationInfo,
+      usableWorkers: Array[WorkerInfo],
+      spreadOutApps: Boolean): Array[Int] = {
+    val coresPerExecutor = app.desc.coresPerExecutor
+    val minCoresPerExecutor = coresPerExecutor.getOrElse(1)
+    val oneExecutorPerWorker = coresPerExecutor.isEmpty
+    val memoryPerExecutor = app.desc.memoryPerExecutorMB
+    val numUsable = usableWorkers.length
+    val assignedCores = new Array[Int](numUsable) // Number of cores to give to each worker
+    val assignedExecutors = new Array[Int](numUsable) // Number of new executors on each worker
+    var coresToAssign = math.min(app.coresLeft, usableWorkers.map(_.coresFree).sum)
+```
+ 
 
     canLaunchExecutor()此函数判断该worker上是否可以启动一个Executor；
     首先要判断该worker上是否有充足的资源，usableWorkers(pos)代表一个worker；
