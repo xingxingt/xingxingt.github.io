@@ -18,10 +18,10 @@ tags:
 Master作为资源管理和分配的组件，所以今天我们重点来看Spark Core中的Master如何实现资源的注册，状态的维护以及调度分配;
     
 ### Master内部代码概览
-1. Master继承了ThreadSafeRpcEndpoint所以它本身也就是一个消息循环体，可以接受其他组件发送的消息并处理;
-2. 在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息,例如注册的worker,application,Driver等；
-3. 处理Master所管理的一些组件；
-4. 资源调度;   参看如下源码：
+1,Master继承了ThreadSafeRpcEndpoint所以它本身也就是一个消息循环体，可以接受其他组件发送的消息并处理;  
+2,在Master内部维护了一大堆数据结构，用于存放资源组件的元数据信息,例如注册的worker,application,Driver等；  
+3,处理Master所管理的一些组件；  
+4,资源调度;   参看如下源码：  
 
 ```scala
   //todo 在Master中维护的数据结构
