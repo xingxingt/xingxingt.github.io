@@ -14,9 +14,7 @@ tags:
 >Spark源码之DAGScheduler介绍篇
 > 
 
-    Spark Application中的RDD经过一系列的Transformation操作后由Action算子导致了SparkContext.runjob的执行,
-    之后执行DAGScheduler.runJob(),最终导致了DAGScheduler中的submitJob的执行,在DAGScheduler中完成sparkJob
-    的DAG划分,并将生成的TaskSet交给taskScheduler处理，如下图所示:
+Spark Application中的RDD经过一系列的Transformation操作后由Action算子导致了SparkContext.runjob的执行,之后执行DAGScheduler.runJob(),最终导致了DAGScheduler中的submitJob的执行,在DAGScheduler中完成sparkJob的DAG划分,并将生成的TaskSet交给taskScheduler处理，如下图所示:
 
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwaee7mjwfj314i0k8q81.jpg)
 
