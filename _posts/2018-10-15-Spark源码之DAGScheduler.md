@@ -18,7 +18,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
 
 ![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwaee7mjwfj314i0k8q81.jpg)
 
-### 深入DAGScheduler源码
+### 运行job
 
 我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了dagScheduler.runJob()方法；如下源码所示:
     
@@ -83,6 +83,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
   }
 ```
 
+### 提交job
 
 进入submitJob方法，如下源代码所示，先生成一个jobId，紧接着使用eventProcessLoop发送一个JobSubmitted的消息，那我们就要看下这个eventProcessLoop是什么了；
     
@@ -190,6 +191,8 @@ ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，
     case JobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties) =>
       dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
 ```
+
+### 划分stage,生成stage依赖关系
 
 那我们就进入handleJobSubmitted方法，我们先看下此方法中的finalStage = newResultStage(....)代码,在这里要说一下在一个DAG中最后一个Stage叫做resultStage,而前面的所有stage都叫做shuffleMapStage;而newResultStage(....)方法就是根据提供的jobId生成一个ResultStage,如下源码所示:
 
@@ -319,6 +322,8 @@ ResultStage的所有父stage，然后在new出一个ResultStage实例来;
     submitWaitingStages()
 ```
 
+### 提交stage
+
 接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，这个方法用于获取stage未执行的Parent Stage,如果有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接返回，若获取不到：如果RDD的存储级别为空返回nil；
     
 ```scala
@@ -378,6 +383,8 @@ private def getMissingParentStages(stage: Stage): List[Stage] = {
     missing.toList
   }
 ```
+
+### 将TaskSet提交给TaskScheduler
 
 在处理完`getMissingParentStages()`方法后，便调用`submitMissingTasks()`方法，在这个方法里面便是提交Task了,下面我们便详细分析这个方法;
 1. 首先获取到该stage的partition，并将该stage放入到runningStages数据结构中;
