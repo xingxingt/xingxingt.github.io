@@ -25,32 +25,179 @@ tags:
     我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了
     dagScheduler.runJob()方法；如下图所示:
     
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fwaz2ykk33j318i09iq37.jpg)  
-![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwaetpjg0dj31js0omta7.jpg)
+```
+/**
+   * Return an array that contains all of the elements in this RDD.
+   */
+  def collect(): Array[T] = withScope {
+    val results = sc.runJob(this, (iter: Iterator[T]) => iter.toArray)
+    Array.concat(results: _*)
+  }
+```
+```
+  /**
+   * Run a function on a given set of partitions in an RDD and pass the results to the given
+   * handler function. This is the main entry point for all actions in Spark.
+   */
+  def runJob[T, U: ClassTag](
+      rdd: RDD[T],
+      func: (TaskContext, Iterator[T]) => U,
+      partitions: Seq[Int],
+      resultHandler: (Int, U) => Unit): Unit = {
+    if (stopped.get()) {
+      throw new IllegalStateException("SparkContext has been shutdown")
+    }
+    val callSite = getCallSite
+    val cleanedFunc = clean(func)
+    logInfo("Starting job: " + callSite.shortForm)
+    if (conf.getBoolean("spark.logLineage", false)) {
+      logInfo("RDD's recursive dependencies:\n" + rdd.toDebugString)
+    }
+    dagScheduler.runJob(rdd, cleanedFunc, partitions, callSite, resultHandler, localProperties.get)
+    progressBar.foreach(_.finishAll())
+    rdd.doCheckpoint()
+  }
+```
 
-    接着看SparkContext.runjob()方法,在方法里面调用了submitJob()方法，并且返回一个JobWaiter监听submitJob的
+    接着看DAGScheduler.runjob()方法,在方法里面调用了submitJob()方法，并且返回一个JobWaiter监听submitJob的
     结果，并对结果做出相应的处理;
-    
-![](https://ws4.sinaimg.cn/large/006tNbRwly1fwaz4k1b11j31jq0tu406.jpg)
+
+```
+  def runJob[T, U](
+      rdd: RDD[T],
+      func: (TaskContext, Iterator[T]) => U,
+      partitions: Seq[Int],
+      callSite: CallSite,
+      resultHandler: (Int, U) => Unit,
+      properties: Properties): Unit = {
+    val start = System.nanoTime
+    val waiter = submitJob(rdd, func, partitions, callSite, resultHandler, properties)
+    waiter.awaitResult() match {
+      case JobSucceeded =>
+        logInfo("Job %d finished: %s, took %f s".format
+          (waiter.jobId, callSite.shortForm, (System.nanoTime - start) / 1e9))
+      case JobFailed(exception: Exception) =>
+        logInfo("Job %d failed: %s, took %f s".format
+          (waiter.jobId, callSite.shortForm, (System.nanoTime - start) / 1e9))
+        // SPARK-8644: Include user stack trace in exceptions coming from DAGScheduler.
+        val callerStackTrace = Thread.currentThread().getStackTrace.tail
+        exception.setStackTrace(exception.getStackTrace ++ callerStackTrace)
+        throw exception
+    }
+  }
+```
+
 
     进入submitJob方法，如下图所示，先生成一个jobId，紧接着使用eventProcessLoop发送一个JobSubmitted的消息，那我
     们就要看下这个eventProcessLoop是什么了；
     
-![](https://ws1.sinaimg.cn/large/006tNbRwgy1fwaf3ej89vj31ey13smzc.jpg)
+```
+  def submitJob[T, U](
+      rdd: RDD[T],
+      func: (TaskContext, Iterator[T]) => U,
+      partitions: Seq[Int],
+      callSite: CallSite,
+      resultHandler: (Int, U) => Unit,
+      properties: Properties): JobWaiter[U] = {
+    // Check to make sure we are not launching a task on a partition that does not exist.
+    val maxPartitions = rdd.partitions.length
+    partitions.find(p => p >= maxPartitions || p < 0).foreach { p =>
+      throw new IllegalArgumentException(
+        "Attempting to access a non-existent partition: " + p + ". " +
+          "Total number of partitions: " + maxPartitions)
+    }
+
+    val jobId = nextJobId.getAndIncrement()
+    if (partitions.size == 0) {
+      // Return immediately if the job is running 0 tasks
+      return new JobWaiter[U](this, jobId, 0, resultHandler)
+    }
+
+    assert(partitions.size > 0)
+    val func2 = func.asInstanceOf[(TaskContext, Iterator[_]) => _]
+    val waiter = new JobWaiter(this, jobId, partitions.size, resultHandler)
+    eventProcessLoop.post(JobSubmitted(
+      jobId, rdd, func2, partitions.toArray, callSite, waiter,
+      SerializationUtils.clone(properties)))
+    waiter
+  }
+```
 
     查看源码发现eventProcessLoop是一个消息循环体，而且他还继承了EventLoop，再看下EventLoop的代码，发现EventLoop
     是一个时间处理器，在内部使用BlockingQueue去存储接受到的消息事件，用一个守护线程去执行onReceive,而onReceive方法
     在DAGSchedulerEventProcessLoop中已经被重写，而在onReceive方法中调用doOnReceive方法做具体的事件处理;
 
-![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwaf5bggkzj31ee04i3yl.jpg)
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fwaz79gvz9j31kw0yvtau.jpg)
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fwaz67tr1dj31km14075x.jpg)
+
+```
+  private[scheduler] val eventProcessLoop = new DAGSchedulerEventProcessLoop(this)
+```
+```
+private[scheduler] class DAGSchedulerEventProcessLoop(dagScheduler: DAGScheduler)
+  extends EventLoop[DAGSchedulerEvent]("dag-scheduler-event-loop") with Logging {
+
+  private[this] val timer = dagScheduler.metricsSource.messageProcessingTimer
+
+  /**
+   * The main event loop of the DAG scheduler.
+   */
+  override def onReceive(event: DAGSchedulerEvent): Unit = {
+    val timerContext = timer.time()
+    try {
+      doOnReceive(event)
+    } finally {
+      timerContext.stop()
+    }
+  }
+
+  private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
+    case JobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties) =>
+      dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
+
+    case MapStageSubmitted(jobId, dependency, callSite, listener, properties) =>
+      dagScheduler.handleMapStageSubmitted(jobId, dependency, callSite, listener, properties)
+```
+```
+private[spark] abstract class EventLoop[E](name: String) extends Logging {
+
+  private val eventQueue: BlockingQueue[E] = new LinkedBlockingDeque[E]()
+
+  private val stopped = new AtomicBoolean(false)
+
+  private val eventThread = new Thread(name) {
+    setDaemon(true)
+
+    override def run(): Unit = {
+      try {
+        while (!stopped.get) {
+          val event = eventQueue.take()
+          try {
+            onReceive(event)
+          } catch {
+            case NonFatal(e) => {
+              try {
+                onError(e)
+              } catch {
+                case NonFatal(e) => logError("Unexpected error in " + name, e)
+              }
+            }
+          }
+        }
+      } catch {
+        case ie: InterruptedException => // exit even if eventQueue is not empty
+        case NonFatal(e) => logError("Unexpected error in " + name, e)
+      }
+    }
+```
 
     ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，那么我们还是言归正传，继续看在SubmitJob的方法中使用
     eventProcessLoop发送一个JobSubmitted消息给自己，也就是在doOnReceive方法中找到JobSubmitted事件，在此方法中
     又继续调用了dagScheduler.handleJobSubmitted方法；如下图源代码所示:
 
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fwazeilze8j31kq056q38.jpg)
+```
+  private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
+    case JobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties) =>
+      dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
+```
 
     那我们就进入handleJobSubmitted方法，我们先看下此方法中的finalStage = newResultStage(....)代码,在这里要说一下
     在一个DAG中最后一个Stage叫做resultStage,而前面的所有stage都叫做shuffleMapStage;而newResultStage(....)方法
