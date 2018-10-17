@@ -22,7 +22,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
 
 我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了dagScheduler.runJob()方法；如下源码所示:
     
-```
+```scala
 /**
    * Return an array that contains all of the elements in this RDD.
    */
@@ -31,7 +31,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
     Array.concat(results: _*)
   }
 ```
-```
+```scala
   /**
    * Run a function on a given set of partitions in an RDD and pass the results to the given
    * handler function. This is the main entry point for all actions in Spark.
@@ -58,7 +58,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
 
 接着看DAGScheduler.runjob()方法,在方法里面调用了submitJob()方法，并且返回一个JobWaiter监听submitJob的结果，并对结果做出相应的处理;
 
-```
+```scala
   def runJob[T, U](
       rdd: RDD[T],
       func: (TaskContext, Iterator[T]) => U,
@@ -86,7 +86,7 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
 
 进入submitJob方法，如下源代码所示，先生成一个jobId，紧接着使用eventProcessLoop发送一个JobSubmitted的消息，那我们就要看下这个eventProcessLoop是什么了；
     
-```
+```scala
   def submitJob[T, U](
       rdd: RDD[T],
       func: (TaskContext, Iterator[T]) => U,
@@ -121,10 +121,10 @@ Spark Application中的RDD经过一系列的Transformation操作后由Action算�
 查看源码发现eventProcessLoop是一个消息循环体，而且他还继承了EventLoop，再看下EventLoop的代码，发现EventLoop是一个时间处理器，在内部使用BlockingQueue去存储接受到的消息事件，用一个守护线程去执行onReceive,而onReceive方法在DAGSchedulerEventProcessLoop中已经被重写，而在onReceive方法中调用doOnReceive方法做具体的事件处理;
 
 
-```
+```scala
   private[scheduler] val eventProcessLoop = new DAGSchedulerEventProcessLoop(this)
 ```
-```
+```scala
 private[scheduler] class DAGSchedulerEventProcessLoop(dagScheduler: DAGScheduler)
   extends EventLoop[DAGSchedulerEvent]("dag-scheduler-event-loop") with Logging {
 
@@ -149,7 +149,7 @@ private[scheduler] class DAGSchedulerEventProcessLoop(dagScheduler: DAGScheduler
     case MapStageSubmitted(jobId, dependency, callSite, listener, properties) =>
       dagScheduler.handleMapStageSubmitted(jobId, dependency, callSite, listener, properties)
 ```
-```
+```scala
 private[spark] abstract class EventLoop[E](name: String) extends Logging {
 
   private val eventQueue: BlockingQueue[E] = new LinkedBlockingDeque[E]()
@@ -185,7 +185,7 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
 ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，那么我们还是言归正传，继续看在SubmitJob的方法中使用eventProcessLoop发送一个JobSubmitted消息给自己，也就是在doOnReceive方法中找到JobSubmitted事件，在此方法中又继续调用了dagScheduler.handleJobSubmitted方法；
 如下源代码所示:
 
-```
+```scala
   private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
     case JobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties) =>
       dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
@@ -193,7 +193,7 @@ ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，
 
 那我们就进入handleJobSubmitted方法，我们先看下此方法中的finalStage = newResultStage(....)代码,在这里要说一下在一个DAG中最后一个Stage叫做resultStage,而前面的所有stage都叫做shuffleMapStage;而newResultStage(....)方法就是根据提供的jobId生成一个ResultStage,如下源码所示:
 
-```
+```scala
   private[scheduler] def handleJobSubmitted(jobId: Int,
       finalRDD: RDD[_],
       func: (TaskContext, Iterator[_]) => _,
@@ -238,17 +238,8 @@ ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，
 
 那我们就要看下ResultStage是如何生成的，我们可以看到,在newResultStage方法中先通过getParentStagesAndId方法获取
 ResultStage的所有父stage，然后在new出一个ResultStage实例来;
-紧接着我们把代码追踪到getParentStages方法中,这个方法可以根据提供的RDD创建一个父stage的列表，我们再来剖析下这个方法; 
-在这个方法中先实例出两个数据结构parents,visited和waitingForVisit,parents是用来存放所有父类stage的数据集，而
-visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访问的RDD数据集;
-在下面代码中,先将传入的RDD放入到waitingForVisit数据集中，然后循环waitingForVisit中所有的RDD，每次循环调用visit
-方法。在visit方法中它利用RDD的dependencies从后向前建立依赖关系，在遍历RDD的dependencies时如果是shufDep就生成
-一个getShuffleMapStage放入到parents数据集中，如果不是就将该dependencie对应的RDD放入到waitingForVisit中，等待
-下一次遍历，最终该方法返回一个父stage的数据集parents给newResultStage方法；
-而且在newResultStage中new出ResultStage,并将stage的数据集parents存放于该ResultStage中;
 
-
-```
+```scala
 /**
    * Create a ResultStage associated with the provided jobId.
    */
@@ -266,17 +257,11 @@ visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访�
   }
 
 ```
-```
-/**
-   * Helper function to eliminate some code re-use when creating new stages.
-   */
-  private def getParentStagesAndId(rdd: RDD[_], firstJobId: Int): (List[Stage], Int) = {
-    val parentStages = getParentStages(rdd, firstJobId)
-    val id = nextStageId.getAndIncrement()
-    (parentStages, id)
-  }
-```
-```
+紧接着我们把代码追踪到getParentStages方法中,这个方法可以根据提供的RDD创建一个父stage的列表，我们再来剖析下这个方法; 在这个方法中先实例出两个数据结构parents,visited和waitingForVisit,parents是用来存放所有父类stage的数据集，而visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访问的RDD数据集;
+在下面代码中,先将传入的RDD放入到waitingForVisit数据集中，然后循环waitingForVisit中所有的RDD，每次循环调用visit方法。在visit方法中它利用RDD的dependencies从后向前建立依赖关系，在遍历RDD的dependencies时如果是shufDep就生成一个getShuffleMapStage放入到parents数据集中，如果不是就将该dependencie对应的RDD放入到waitingForVisit中，等待下一次遍历，最终该方法返回一个父stage的数据集parents给newResultStage方法；
+而且在newResultStage中new出ResultStage,并将stage的数据集parents存放于该ResultStage中;
+
+```scala
  /**
    * Get or create the list of parent stages for a given RDD.  The new Stages will be created with
    * the provided firstJobId.
@@ -314,7 +299,7 @@ visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访�
 stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()
 方法，这个我们在接下来的submitStage方法中讲述，源代码如下所示:
     
-```
+```scala
  val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
     clearCacheLocs()
     logInfo("Got job %s (%s) with %d output partitions".format(
@@ -342,7 +327,7 @@ stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的�
 partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接
 返回，若获取不到：如果RDD的存储级别为空返回nil；
     
-```
+```scala
  /** Submits stage, but first recursively submits any missing parents. */
   private def submitStage(stage: Stage) {
     val jobId = activeJobForStage(stage)
@@ -399,5 +384,7 @@ private def getMissingParentStages(stage: Stage): List[Stage] = {
     missing.toList
   }
 ```
+
+在处理完`getMissingParentStages()`方法后，便调用`submitMissingTasks()`方法，在这个方法里面便是提交Task了,下面我们便详细分析这个方法;
 
     
