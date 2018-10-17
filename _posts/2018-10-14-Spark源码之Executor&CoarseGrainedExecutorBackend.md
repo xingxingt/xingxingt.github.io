@@ -198,6 +198,8 @@ CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法�
     case RegisteredExecutor(hostname) =>
       logInfo("Successfully registered with driver")
       executor = new Executor(executorId, hostname, env, userClassPath, isLocal = false)
+      
+    ......  
 ```  
 
 #### 需要注意的是,我们现在主要说的是spark的StandAlone模式;CoarseGrainedExecutorBackend进程的产生和Executor对象的实例化都阐述完毕，最后放出这篇的分析图：
