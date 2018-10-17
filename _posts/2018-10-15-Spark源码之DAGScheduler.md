@@ -22,8 +22,7 @@ tags:
 
 ### 深入DAGScheduler源码
 
-    我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了
-    dagScheduler.runJob()方法；如下图所示:
+我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了dagScheduler.runJob()方法；如下图所示:
     
 ```
 /**
