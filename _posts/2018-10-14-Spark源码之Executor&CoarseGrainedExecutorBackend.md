@@ -95,23 +95,23 @@ Master在启动一个Excutor所在的进程的时候加载了CoarseGrainedExecut
   }
 ```
 ```scala
-      //main中调用的run方法
-      val env = SparkEnv.createExecutorEnv(
-        driverConf, executorId, hostname, port, cores, isLocal = false)
+   //main中调用的run方法
+   val env = SparkEnv.createExecutorEnv(
+     driverConf, executorId, hostname, port, cores, isLocal = false)
 
-      // SparkEnv will set spark.executor.port if the rpc env is listening for incoming
-      // connections (e.g., if it's using akka). Otherwise, the executor is running in
-      // client mode only, and does not accept incoming connections.
-      val sparkHostPort = env.conf.getOption("spark.executor.port").map { port =>
-          hostname + ":" + port
-        }.orNull
-      env.rpcEnv.setupEndpoint("Executor", new CoarseGrainedExecutorBackend(
-        env.rpcEnv, driverUrl, executorId, sparkHostPort, cores, userClassPath, env))
-      workerUrl.foreach { url =>
-        env.rpcEnv.setupEndpoint("WorkerWatcher", new WorkerWatcher(env.rpcEnv, url))
-      }
-      env.rpcEnv.awaitTermination()
-      SparkHadoopUtil.get.stopExecutorDelegationTokenRenewer()
+   // SparkEnv will set spark.executor.port if the rpc env is listening for incoming
+   // connections (e.g., if it's using akka). Otherwise, the executor is running in
+   // client mode only, and does not accept incoming connections.
+   val sparkHostPort = env.conf.getOption("spark.executor.port").map { port =>
+       hostname + ":" + port
+     }.orNull
+   env.rpcEnv.setupEndpoint("Executor", new CoarseGrainedExecutorBackend(
+     env.rpcEnv, driverUrl, executorId, sparkHostPort, cores, userClassPath, env))
+   workerUrl.foreach { url =>
+     env.rpcEnv.setupEndpoint("WorkerWatcher", new WorkerWatcher(env.rpcEnv, url))
+   }
+   env.rpcEnv.awaitTermination()
+   SparkHadoopUtil.get.stopExecutorDelegationTokenRenewer()
 ```
 
 
