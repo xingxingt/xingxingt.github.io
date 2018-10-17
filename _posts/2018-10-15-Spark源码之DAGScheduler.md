@@ -366,8 +366,7 @@ partitions的location信息,该信息是TaskLocation的实例。如果从cacheLo
     }
   }
 
-```
-```
+
 private def getMissingParentStages(stage: Stage): List[Stage] = {
     val missing = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
