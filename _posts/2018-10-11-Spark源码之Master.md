@@ -398,46 +398,124 @@ coresToAssign：最少为Application分配的core数；
 ```
  
 
-    canLaunchExecutor()此函数判断该worker上是否可以启动一个Executor；
-    首先要判断该worker上是否有充足的资源，usableWorkers(pos)代表一个worker；
-    接着判断在这个方法内如果允许在一个worker上启动多个Executor，那么他将总是启动新的Executor，否则，如果有之前启动
-    的Executor，就在这个Executor上不断的增加cores；如下代码所示：
-    
-![](https://ws4.sinaimg.cn/large/006tNbRwly1fw4gdjvva9j31h60q4q4s.jpg)
+canLaunchExecutor()此函数判断该worker上是否可以启动一个Executor；  
+首先要判断该worker上是否有充足的资源，usableWorkers(pos)代表一个worker；  
+接着判断在这个方法内如果允许在一个worker上启动多个Executor，那么他将总是启动新的Executor，否则，如果有之前启动的Executor，就在这个Executor上不断的增加cores；如下代码所示：
 
-    接着看具体的执行方法，
-    利用canLaunchExecutor()过滤出numUsable中可用的worker；然后遍历每个worker，为每个worker上的Executor分配core；
-    这里有个参数spreadOutApps，如果在默认的情况下spreadOutApps=true它会每次给我们的Executor分配一个core；
-    如果在默认的情况下（spreadOutApps=true）它会每次给我们的Executor分配一个core，但是如果spreadOutApps=false它也是
-	每次给我们的Executor分配一个core；
-    具体的算法：
-	如果是spreadOutApps=false则会不断循环使用当前worker上的这个Executor的所有freeCores；
-	实际上的工作原理：假如有四个worker，如果是spreadOutApps=true，它会在每个worker上启动一个Executor然后先循环一轮，
-	给每个woker上的Executor分配一个core，然后再次循环再给每个executor 分配一个core，依次循环分配;
-       
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fw4gr8n0pzj31hi12kgof.jpg)
+```scala
+    /** Return whether the specified worker can launch an executor for this app. */
+    def canLaunchExecutor(pos: Int): Boolean = {
+      val keepScheduling = coresToAssign >= minCoresPerExecutor
+      val enoughCores = usableWorkers(pos).coresFree - assignedCores(pos) >= minCoresPerExecutor
 
-    从下面的代码其实我们可以看出：
-    如果是每个worker下面只能够为当前的应用程序分配一个Executor的话，每次为这个executor只分配一个core！
-    在应用程序提交时指定每个Executor分配多个cores，其实在实际分配的时候没有什么用，因为在为每个Executor
-    分配core的时候是一个一个的分配的，但是指定的cores在前面做条件过滤时有用，只用在满足应用程序指定的资
-    源条件情况下才能进行分配；
+      // If we allow multiple executors per worker, then we can always launch new executors.
+      // Otherwise, if there is already an executor on this worker, just give it more cores.
+      val launchingNewExecutor = !oneExecutorPerWorker || assignedExecutors(pos) == 0
+      if (launchingNewExecutor) {
+        val assignedMemory = assignedExecutors(pos) * memoryPerExecutor
+        val enoughMemory = usableWorkers(pos).memoryFree - assignedMemory >= memoryPerExecutor
+        val underLimit = assignedExecutors.sum + app.executors.size < app.executorLimit
+        keepScheduling && enoughCores && enoughMemory && underLimit
+      } else {
+        // We're adding cores to an existing executor, so no need
+        // to check memory and executor limits
+        keepScheduling && enoughCores
+      }
+    }
+```
 
-![](https://ws3.sinaimg.cn/large/006tNbRwgy1fw4gxbr16aj31eq0acwet.jpg)
+接着看具体的执行方法，  
+利用canLaunchExecutor()过滤出numUsable中可用的worker；然后遍历每个worker，为每个worker上的Executor分配core；  
+这里有个参数spreadOutApps，如果在默认的情况下spreadOutApps=true它会每次给我们的Executor分配一个core；  
+如果在默认的情况下（spreadOutApps=true）它会每次给我们的Executor分配一个core，但是如果spreadOutApps=false它也是每次给我们的Executor分配一个core；  
+具体的算法：  
+如果是spreadOutApps=false则会不断循环使用当前worker上的这个Executor的所有freeCores；实际上的工作原理：假如有四个worker，如果是spreadOutApps=true，它会在每个worker上启动一个Executor然后先循环一轮，给每个woker上的Executor分配一个core，然后再次循环再给每个executor 分配一个core，依次循环分配;
 
-    上面scheduleExecutorsOnWorkers()方法中已经讲述了Executor在worker上分配的原则，并且会返回一个
-    每个worker上分配资源的数组assignedCores，接下来就可以根据这个资源分配的数组去为Executor分配资源，并且启动Executor；
-    
-![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
-![](https://ws4.sinaimg.cn/large/006tNbRwgy1fw4h5rf84rj31jg0l2wfr.jpg)
+```scala
+   var freeWorkers = (0 until numUsable).filter(canLaunchExecutor)
+    while (freeWorkers.nonEmpty) {
+      //todo 遍历每个worker
+      freeWorkers.foreach { pos =>
+        var keepScheduling = true
+        while (keepScheduling && canLaunchExecutor(pos)) {
+          coresToAssign -= minCoresPerExecutor
+          //todo 记录该worker上启动Executor分配的core数
+          assignedCores(pos) += minCoresPerExecutor
 
-    接下来看下launchDriver()方法，
-    1,worker.endpoint.send(LaunchExecutor(masterUrl.....
-    向worker发送一个LaunchExecutor消息，在worker中启动一个ExecutorRunner线程；
-    2,exec.application.driver.send(ExecutorAdded(exec.... 向driver中添加一个Executor；
-    
-![](https://ws2.sinaimg.cn/large/006tNbRwgy1fw4ky40g2cj31dw0bot9f.jpg) 
 
+          // If we are launching one executor per worker, then every iteration assigns 1 core
+          // to the executor. Otherwise, every iteration assigns cores to a new executor.
+          //todo 如果在每个worker上启动一个Executor，那么就给每个executor分配一个core
+          if (oneExecutorPerWorker) {
+            assignedExecutors(pos) = 1
+          } else {
+            //todo 否则就给当前的executor不断的加一个core
+            assignedExecutors(pos) += 1
+          }
+
+          // Spreading out an application means spreading out its executors across as
+          // many workers as possible. If we are not spreading out, then we should keep
+          // scheduling executors on this worker until we use all of its resources.
+          // Otherwise, just move on to the next worker.
+          if (spreadOutApps) {
+            keepScheduling = false
+          }
+        }
+      }
+```
+
+从下面的代码其实我们可以看出：  
+如果是每个worker下面只能够为当前的应用程序分配一个Executor的话，每次为这个executor只分配一个core！  
+在应用程序提交时指定每个Executor分配多个cores，其实在实际分配的时候没有什么用，因为在为每个Executor分配core的时候是一个一个的分配的，但是指定的cores在前面做条件过滤时有用，只用在满足应用程序指定的资源条件情况下才能进行分配；
+
+```scala
+    // If we are launching one executor per worker, then every iteration assigns 1 core
+    // to the executor. Otherwise, every iteration assigns cores to a new executor.
+    //todo 如果在每个worker上启动一个Executor，那么就给每个executor分配一个core
+    if (oneExecutorPerWorker) {
+      assignedExecutors(pos) = 1
+    } else {
+      //todo 否则就给当前的executor不断的加一个core
+      assignedExecutors(pos) += 1
+    }
+```
+
+上面scheduleExecutorsOnWorkers()方法中已经讲述了Executor在worker上分配的原则，并且会返回一个每个worker上分配资源的数组assignedCores，接下来就可以根据这个资源分配的数组去为Executor分配资源，并且启动Executor；
+
+ ```scala
+   private def allocateWorkerResourceToExecutors(
+      app: ApplicationInfo,
+      assignedCores: Int,
+      coresPerExecutor: Option[Int],
+      worker: WorkerInfo): Unit = {
+    // If the number of cores per executor is specified, we divide the cores assigned
+    // to this worker evenly among the executors with no remainder.
+    // Otherwise, we launch a single executor that grabs all the assignedCores on this worker.
+    val numExecutors = coresPerExecutor.map { assignedCores / _ }.getOrElse(1)
+    val coresToAssign = coresPerExecutor.getOrElse(assignedCores)
+    for (i <- 1 to numExecutors) {
+      val exec = app.addExecutor(worker, coresToAssign)
+      launchExecutor(worker, exec)
+      app.state = ApplicationState.RUNNING
+    }
+  }
+ ```
+
+接下来看下launchExecutor()方法，  
+1,`worker.endpoint.send(LaunchExecutor(masterUrl.....`向worker发送一个LaunchExecutor消息，在worker中启动一个ExecutorRunner线程；  
+2,`exec.application.driver.send(ExecutorAdded(exec.... `向driver中添加一个Executor；  
+
+```scala
+  private def launchExecutor(worker: WorkerInfo, exec: ExecutorDesc): Unit = {
+    logInfo("Launching executor " + exec.fullId + " on worker " + worker.id)
+    worker.addExecutor(exec)
+    worker.endpoint.send(LaunchExecutor(masterUrl,
+      exec.application.id, exec.id, exec.application.desc, exec.cores, exec.memory))
+    exec.application.driver.send(
+      ExecutorAdded(exec.id, worker.id, worker.hostPort, exec.cores, exec.memory))
+  }
+
+```
 
 #### 至此Master中的重要内容已经叙述完毕，最后祭个图:
 
