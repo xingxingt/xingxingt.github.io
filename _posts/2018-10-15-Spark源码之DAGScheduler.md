@@ -22,7 +22,7 @@ tags:
 
 ### 深入DAGScheduler源码
 
-我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了dagScheduler.runJob()方法；如下图所示:
+我们从RDD的Action操作产生的SparkContext.runjob说起,在SparkContext.runjob()中最终调用了dagScheduler.runJob()方法；如下源码所示:
     
 ```
 /**
@@ -58,8 +58,7 @@ tags:
   }
 ```
 
-    接着看DAGScheduler.runjob()方法,在方法里面调用了submitJob()方法，并且返回一个JobWaiter监听submitJob的
-    结果，并对结果做出相应的处理;
+接着看DAGScheduler.runjob()方法,在方法里面调用了submitJob()方法，并且返回一个JobWaiter监听submitJob的结果，并对结果做出相应的处理;
 
 ```
   def runJob[T, U](
@@ -87,8 +86,7 @@ tags:
 ```
 
 
-    进入submitJob方法，如下图所示，先生成一个jobId，紧接着使用eventProcessLoop发送一个JobSubmitted的消息，那我
-    们就要看下这个eventProcessLoop是什么了；
+进入submitJob方法，如下源代码所示，先生成一个jobId，紧接着使用eventProcessLoop发送一个JobSubmitted的消息，那我们就要看下这个eventProcessLoop是什么了；
     
 ```
   def submitJob[T, U](
@@ -122,9 +120,7 @@ tags:
   }
 ```
 
-    查看源码发现eventProcessLoop是一个消息循环体，而且他还继承了EventLoop，再看下EventLoop的代码，发现EventLoop
-    是一个时间处理器，在内部使用BlockingQueue去存储接受到的消息事件，用一个守护线程去执行onReceive,而onReceive方法
-    在DAGSchedulerEventProcessLoop中已经被重写，而在onReceive方法中调用doOnReceive方法做具体的事件处理;
+查看源码发现eventProcessLoop是一个消息循环体，而且他还继承了EventLoop，再看下EventLoop的代码，发现EventLoop是一个时间处理器，在内部使用BlockingQueue去存储接受到的消息事件，用一个守护线程去执行onReceive,而onReceive方法在DAGSchedulerEventProcessLoop中已经被重写，而在onReceive方法中调用doOnReceive方法做具体的事件处理;
 
 
 ```
@@ -188,9 +184,8 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
     }
 ```
 
-    ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，那么我们还是言归正传，继续看在SubmitJob的方法中使用
-    eventProcessLoop发送一个JobSubmitted消息给自己，也就是在doOnReceive方法中找到JobSubmitted事件，在此方法中
-    又继续调用了dagScheduler.handleJobSubmitted方法；如下图源代码所示:
+ok，我们已经知道了在DAGScheduler中的消息事件是如何处理的，那么我们还是言归正传，继续看在SubmitJob的方法中使用eventProcessLoop发送一个JobSubmitted消息给自己，也就是在doOnReceive方法中找到JobSubmitted事件，在此方法中又继续调用了dagScheduler.handleJobSubmitted方法；
+如下源代码所示:
 
 ```
   private def doOnReceive(event: DAGSchedulerEvent): Unit = event match {
@@ -198,41 +193,214 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
       dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
 ```
 
-    那我们就进入handleJobSubmitted方法，我们先看下此方法中的finalStage = newResultStage(....)代码,在这里要说一下
-    在一个DAG中最后一个Stage叫做resultStage,而前面的所有stage都叫做shuffleMapStage;而newResultStage(....)方法
-    就是根据提供的jobId生成一个ResultStage,如下图源码所示:
+那我们就进入handleJobSubmitted方法，我们先看下此方法中的finalStage = newResultStage(....)代码,在这里要说一下在一个DAG中最后一个Stage叫做resultStage,而前面的所有stage都叫做shuffleMapStage;而newResultStage(....)方法就是根据提供的jobId生成一个ResultStage,如下源码所示:
 
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fwaziw935hj31fg0wy40d.jpg)
+```
+  private[scheduler] def handleJobSubmitted(jobId: Int,
+      finalRDD: RDD[_],
+      func: (TaskContext, Iterator[_]) => _,
+      partitions: Array[Int],
+      callSite: CallSite,
+      listener: JobListener,
+      properties: Properties) {
+    var finalStage: ResultStage = null
+    try {
+      // New stage creation may throw an exception if, for example, jobs are run on a
+      // HadoopRDD whose underlying HDFS files have been deleted.
+      finalStage = newResultStage(finalRDD, func, partitions, jobId, callSite)
+    } catch {
+      case e: Exception =>
+        logWarning("Creating new stage failed due to exception - job: " + jobId, e)
+        listener.jobFailed(e)
+        return
+    }
 
-    那我们就要看下ResultStage是如何生成的，我们可以看到,在newResultStage方法中先通过getParentStagesAndId方法获取
-    ResultStage的所有父stage，然后在new出一个ResultStage实例来;
-    紧接着我们把代码追踪到getParentStages方法中,这个方法可以根据提供的RDD创建一个父stage的列表，我们再来剖析下这个方法; 
-    在这个方法中先实例出两个数据结构parents,visited和waitingForVisit,parents是用来存放所有父类stage的数据集，而
-    visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访问的RDD数据集;
-    在下面代码中,先将传入的RDD放入到waitingForVisit数据集中，然后循环waitingForVisit中所有的RDD，每次循环调用visit
-    方法。在visit方法中它利用RDD的dependencies从后向前建立依赖关系，在遍历RDD的dependencies时如果是shufDep就生成
-    一个getShuffleMapStage放入到parents数据集中，如果不是就将该dependencie对应的RDD放入到waitingForVisit中，等待
-    下一次遍历，最终该方法返回一个父stage的数据集parents给newResultStage方法；
-    而且在newResultStage中new出ResultStage,并将stage的数据集parents存放于该ResultStage中;
+    val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
+    clearCacheLocs()
+    logInfo("Got job %s (%s) with %d output partitions".format(
+      job.jobId, callSite.shortForm, partitions.length))
+    logInfo("Final stage: " + finalStage + " (" + finalStage.name + ")")
+    logInfo("Parents of final stage: " + finalStage.parents)
+    logInfo("Missing parents: " + getMissingParentStages(finalStage))
 
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fwazr8g0dej31fa0g80tg.jpg)
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fwb00ckoawj31f006aq37.jpg)
-![](https://ws1.sinaimg.cn/large/006tNbRwly1fwb018bh0qj31dk10kwg9.jpg)
+    val jobSubmissionTime = clock.getTimeMillis()
+    jobIdToActiveJob(jobId) = job
+    activeJobs += job
+    finalStage.setActiveJob(job)
+    val stageIds = jobIdToStageIds(jobId).toArray
+    val stageInfos = stageIds.flatMap(id => stageIdToStage.get(id).map(_.latestInfo))
+    listenerBus.post(
+      SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
+    submitStage(finalStage)
+
+    submitWaitingStages()
+  }
+
+```
+
+那我们就要看下ResultStage是如何生成的，我们可以看到,在newResultStage方法中先通过getParentStagesAndId方法获取
+ResultStage的所有父stage，然后在new出一个ResultStage实例来;
+紧接着我们把代码追踪到getParentStages方法中,这个方法可以根据提供的RDD创建一个父stage的列表，我们再来剖析下这个方法; 
+在这个方法中先实例出两个数据结构parents,visited和waitingForVisit,parents是用来存放所有父类stage的数据集，而
+visited使用来存储已被访问的RDD，而waitingForVisit则是等待被访问的RDD数据集;
+在下面代码中,先将传入的RDD放入到waitingForVisit数据集中，然后循环waitingForVisit中所有的RDD，每次循环调用visit
+方法。在visit方法中它利用RDD的dependencies从后向前建立依赖关系，在遍历RDD的dependencies时如果是shufDep就生成
+一个getShuffleMapStage放入到parents数据集中，如果不是就将该dependencie对应的RDD放入到waitingForVisit中，等待
+下一次遍历，最终该方法返回一个父stage的数据集parents给newResultStage方法；
+而且在newResultStage中new出ResultStage,并将stage的数据集parents存放于该ResultStage中;
+
+
+```
+/**
+   * Create a ResultStage associated with the provided jobId.
+   */
+  private def newResultStage(
+      rdd: RDD[_],
+      func: (TaskContext, Iterator[_]) => _,
+      partitions: Array[Int],
+      jobId: Int,
+      callSite: CallSite): ResultStage = {
+    val (parentStages: List[Stage], id: Int) = getParentStagesAndId(rdd, jobId)
+    val stage = new ResultStage(id, rdd, func, partitions, parentStages, jobId, callSite)
+    stageIdToStage(id) = stage
+    updateJobIdStageIdMaps(jobId, stage)
+    stage
+  }
+
+```
+```
+/**
+   * Helper function to eliminate some code re-use when creating new stages.
+   */
+  private def getParentStagesAndId(rdd: RDD[_], firstJobId: Int): (List[Stage], Int) = {
+    val parentStages = getParentStages(rdd, firstJobId)
+    val id = nextStageId.getAndIncrement()
+    (parentStages, id)
+  }
+```
+```
+ /**
+   * Get or create the list of parent stages for a given RDD.  The new Stages will be created with
+   * the provided firstJobId.
+   */
+  private def getParentStages(rdd: RDD[_], firstJobId: Int): List[Stage] = {
+    val parents = new HashSet[Stage]
+    val visited = new HashSet[RDD[_]]
+    // We are manually maintaining a stack here to prevent StackOverflowError
+    // caused by recursively visiting
+    val waitingForVisit = new Stack[RDD[_]]
+    def visit(r: RDD[_]) {
+      if (!visited(r)) {
+        visited += r
+        // Kind of ugly: need to register RDDs with the cache here since
+        // we can't do it in its constructor because # of partitions is unknown
+        for (dep <- r.dependencies) {
+          dep match {
+            case shufDep: ShuffleDependency[_, _, _] =>
+              parents += getShuffleMapStage(shufDep, firstJobId)
+            case _ =>
+              waitingForVisit.push(dep.rdd)
+          }
+        }
+      }
+    }
+    waitingForVisit.push(rdd)
+    while (waitingForVisit.nonEmpty) {
+      visit(waitingForVisit.pop())
+    }
+    parents.toList
+  }
+```
      
-    经过一番折腾后我们再回到handleJobSubmitted方法,现在我们已经获取到了该job的ResultStage，和该ResultStage的父
-    stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()
-    方法，这个我们在接下来的submitStage方法中讲述，源代码如下图所示:
+经过一番折腾后我们再回到handleJobSubmitted方法,现在我们已经获取到了该job的ResultStage，和该ResultStage的父
+stages然后生成一个ActiveJob在DAGScheduler中,以及打印一些stage的信息， 这里有调用getMissingParentStages()
+方法，这个我们在接下来的submitStage方法中讲述，源代码如下所示:
     
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fwb19lz1c1j31im0pqq4q.jpg)
+```
+ val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
+    clearCacheLocs()
+    logInfo("Got job %s (%s) with %d output partitions".format(
+      job.jobId, callSite.shortForm, partitions.length))
+    logInfo("Final stage: " + finalStage + " (" + finalStage.name + ")")
+    logInfo("Parents of final stage: " + finalStage.parents)
+    logInfo("Missing parents: " + getMissingParentStages(finalStage))
 
-    接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，将检查是否有缺失的stage,如果
-    有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，
-    该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的
-    partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接
-    返回，若获取不到：如果RDD的存储级别为空返回nil；
+    val jobSubmissionTime = clock.getTimeMillis()
+    jobIdToActiveJob(jobId) = job
+    activeJobs += job
+    finalStage.setActiveJob(job)
+    val stageIds = jobIdToStageIds(jobId).toArray
+    val stageInfos = stageIds.flatMap(id => stageIdToStage.get(id).map(_.latestInfo))
+    listenerBus.post(
+      SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
+    submitStage(finalStage)
+
+    submitWaitingStages()
+```
+
+接下来进入submitStage方法中，在这个方法中，会先调用getMissingParentStages()方法，将检查是否有缺失的stage,如果
+有则使用递归的方式将该stage提交，并将该stage加入到waitingStages中，也可以再看下getMissingParentStages()方法，
+该方法和getParentStages()方法一样,只不过该方法会判断Stage中的rdds是否在cache中存在，cacheLocs 维护着RDD的
+partitions的location信息,该信息是TaskLocation的实例。如果从cacheLocs中获取到partition的location信息直接
+返回，若获取不到：如果RDD的存储级别为空返回nil；
     
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fwb1jbm6xvj31iq0u075s.jpg)
-![](https://ws4.sinaimg.cn/large/006tNbRwly1fwb2gwuwmfj319i14ywgh.jpg)
-    
-    
+```
+ /** Submits stage, but first recursively submits any missing parents. */
+  private def submitStage(stage: Stage) {
+    val jobId = activeJobForStage(stage)
+    if (jobId.isDefined) {
+      logDebug("submitStage(" + stage + ")")
+      if (!waitingStages(stage) && !runningStages(stage) && !failedStages(stage)) {
+        val missing = getMissingParentStages(stage).sortBy(_.id)
+        logDebug("missing: " + missing)
+        if (missing.isEmpty) {
+          logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
+          submitMissingTasks(stage, jobId.get)
+        } else {
+          for (parent <- missing) {
+            submitStage(parent)
+          }
+          waitingStages += stage
+        }
+      }
+    } else {
+      abortStage(stage, "No active job for stage " + stage.id, None)
+    }
+  }
+
+```
+```
+private def getMissingParentStages(stage: Stage): List[Stage] = {
+    val missing = new HashSet[Stage]
+    val visited = new HashSet[RDD[_]]
+    // We are manually maintaining a stack here to prevent StackOverflowError
+    // caused by recursively visiting
+    val waitingForVisit = new Stack[RDD[_]]
+    def visit(rdd: RDD[_]) {
+      if (!visited(rdd)) {
+        visited += rdd
+        val rddHasUncachedPartitions = getCacheLocs(rdd).contains(Nil)
+        if (rddHasUncachedPartitions) {
+          for (dep <- rdd.dependencies) {
+            dep match {
+              case shufDep: ShuffleDependency[_, _, _] =>
+                val mapStage = getShuffleMapStage(shufDep, stage.firstJobId)
+                if (!mapStage.isAvailable) {
+                  missing += mapStage
+                }
+              case narrowDep: NarrowDependency[_] =>
+                waitingForVisit.push(narrowDep.rdd)
+            }
+          }
+        }
+      }
+    }
+    waitingForVisit.push(stage.rdd)
+    while (waitingForVisit.nonEmpty) {
+      visit(waitingForVisit.pop())
+    }
+    missing.toList
+  }
+```
+
     
