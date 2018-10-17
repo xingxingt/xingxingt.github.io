@@ -191,7 +191,7 @@ CoarseGrainedExecutorBackend实例化出来后我们再看它的onStart()方法�
     }
 ```
 
-如源代码所示，CoarseGrainedExecutorBackend在接到RegisteredExecutor消息后立即实例化了一个executor对象;
+如下源代码所示，CoarseGrainedExecutorBackend在接到RegisteredExecutor消息后立即实例化了一个executor对象;
 
 ```scala
   override def receive: PartialFunction[Any, Unit] = {
