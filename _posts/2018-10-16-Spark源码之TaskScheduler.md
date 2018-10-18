@@ -202,7 +202,7 @@ TaskSchedulerImpl.resourceOffers:为每一个Task具体分配计算资源，输�
   }
 ```
 
-再到DriverEndPoint的makeOffers方法中，scheduler.resourceOffers(workOffers)已经执行完毕，taskSet已经分配完毕,接着执行launchTasks()方法，该方法遍历每个task并向每个task所对应的executor发送launchTask消息;如下代码所示:
+再到DriverEndPoint的makeOffers方法中，scheduler.resourceOffers(workOffers)已经执行完毕，taskSet已经分配完毕,接着执行launchTasks()方法，该方法遍历每个task,并向每个task所对应的executor发送launchTask消息;如下代码所示:
 
 ```scala
     // Launch tasks returned by a set of resource offers
