@@ -155,7 +155,8 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
 
 ```
 
-接着进入`resourceOfferSingleTaskSet`方法,
+接着进入`resourceOfferSingleTaskSet`方法,遍历所有的executor的索引地址,以便作为tasks的索引，将每个task分配给相应的executor，并填充tasks；
+而这个tasks数据结构是调用resourceOfferSingleTaskSet的方法里传进来的，它存储着每个executor内的tasks信息，详细信息见下图源码:
 
 ```scala
   private def resourceOfferSingleTaskSet(
@@ -165,13 +166,15 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
       availableCpus: Array[Int],
       tasks: Seq[ArrayBuffer[TaskDescription]]) : Boolean = {
     var launchedTask = false
-    //todo 遍历所有的executor
+    //todo 遍历所有的executor的索引
     for (i <- 0 until shuffledOffers.size) {
       val execId = shuffledOffers(i).executorId
       val host = shuffledOffers(i).host
       //todo 判断该executor可以用的资源是否>=CPUS_PER_TASK(默认为1)
       if (availableCpus(i) >= CPUS_PER_TASK) {
         try {
+          //todo 为taskSet中的task分配executor，并将信息存储在tasks中,注意这个tasks是从
+          //todo 上面的方法传进来的
           for (task <- taskSet.resourceOffer(execId, host, maxLocality)) {
             //todo 将每个task信息写入下面的数据结构中
             tasks(i) += task
@@ -196,3 +199,5 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
     return launchedTask
   }
 ```
+
+
