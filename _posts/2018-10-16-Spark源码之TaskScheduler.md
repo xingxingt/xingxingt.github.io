@@ -14,7 +14,7 @@ tags:
 >Spark源码之TaskScheduler介绍篇
 > 
 
-### TaskScheduler
+
 前面DAGScheduler将stage划分好之后,又将生成的TaskSet提交给TaskScheduler,那么本章节就要叙述下TaskScheduler如何启动Task的；
 
 ### TaskScheduler任务源码分析 
