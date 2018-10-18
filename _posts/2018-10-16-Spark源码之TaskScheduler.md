@@ -201,4 +201,64 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
   }
 ```
 
+再到DriverEndPoint的makeOffers方法中，scheduler.resourceOffers(workOffers)已经执行完毕，taskSet已经分配完毕,接着执行launchTasks()方法，该方法遍历每个task并向每个task所对应的executor发送launchTask消息;如下代码所示:
 
+```scala
+    // Launch tasks returned by a set of resource offers
+    private def launchTasks(tasks: Seq[Seq[TaskDescription]]) {
+      //todo 遍历每个task
+      for (task <- tasks.flatten) {
+        val serializedTask = ser.serialize(task)
+        //todo 检查序列化后的task大小
+        if (serializedTask.limit >= akkaFrameSize - AkkaUtils.reservedSizeBytes) {
+          scheduler.taskIdToTaskSetManager.get(task.taskId).foreach { taskSetMgr =>
+            try {
+              var msg = "Serialized task %s:%d was %d bytes, which exceeds max allowed: " +
+                "spark.akka.frameSize (%d bytes) - reserved (%d bytes). Consider increasing " +
+                "spark.akka.frameSize or using broadcast variables for large values."
+              msg = msg.format(task.taskId, task.index, serializedTask.limit, akkaFrameSize,
+                AkkaUtils.reservedSizeBytes)
+              taskSetMgr.abort(msg)
+            } catch {
+              case e: Exception => logError("Exception in error callback", e)
+            }
+          }
+        }
+        else {
+          //todo 获取task对应的executor
+          val executorData = executorDataMap(task.executorId)
+          executorData.freeCores -= scheduler.CPUS_PER_TASK
+          //todo 向该executor发送launchTask请求
+          executorData.executorEndpoint.send(LaunchTask(new SerializableBuffer(serializedTask)))
+        }
+      }
+    }
+```
+
+我们继续追踪，进入CoarseGrainedExecutorBackend的LaunchTask的LaunchTask方法，该方法又调用了`executor.launchTask`；
+```scala
+    case LaunchTask(data) =>
+      if (executor == null) {
+        logError("Received LaunchTask command but executor was null")
+        System.exit(1)
+      } else {
+        val taskDesc = ser.deserialize[TaskDescription](data.value)
+        logInfo("Got assigned task " + taskDesc.taskId)
+        executor.launchTask(this, taskId = taskDesc.taskId, attemptNumber = taskDesc.attemptNumber,
+          taskDesc.name, taskDesc.serializedTask)
+      }
+```
+我们进入Executor的launchTask方法,在该方法内实例化除了TaskRunner对象,而TaskRunner对象是一个线程,通过线程池threadPool来运行;
+```scala
+  def launchTask(
+      context: ExecutorBackend,
+      taskId: Long,
+      attemptNumber: Int,
+      taskName: String,
+      serializedTask: ByteBuffer): Unit = {
+    val tr = new TaskRunner(context, taskId = taskId, attemptNumber = attemptNumber, taskName,
+      serializedTask)
+    runningTasks.put(taskId, tr)
+    threadPool.execute(tr)
+  }
+```
