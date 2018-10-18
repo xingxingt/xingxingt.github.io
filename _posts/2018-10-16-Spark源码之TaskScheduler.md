@@ -135,8 +135,9 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
     // Take each TaskSet in our scheduling order, and then offer it each node in increasing order
     // of locality levels so that it gets a chance to launch local tasks on all of them.
     // NOTE: the preferredLocality order: PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY
-    //todo 我们在DAGScheduler.submitMissingTasks()中已经获取了每个Task中数据所在的位置，这是的taskSet.myLocalityLevels
-    //todo 只是根据Task数据所在的host来获取它的的数据本地性级别(PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY)
+    //todo 我们在DAGScheduler.submitMissingTasks()中已经获取了每个Task中数据所在的位置，
+    //todo 这是的taskSet.myLocalityLevels只是根据Task数据所在的host来获取它的的数据本地
+    //todo 性级别(PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY)
     var launchedTask = false
     //todo  对每一个taskSet，按照就近顺序分配最近的executor来执行task
     for (taskSet <- sortedTaskSets; maxLocality <- taskSet.myLocalityLevels) {
