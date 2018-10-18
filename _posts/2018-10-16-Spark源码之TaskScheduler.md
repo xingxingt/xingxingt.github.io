@@ -19,9 +19,7 @@ tags:
 
 
 
-`DAGScheduler`将TaskSet提交给`TaskScheduler`,那么就先看下`submitTasks()`,打开`TaskScheduler`的实现类`TaskSchedulerImpl`,
-在这个方法里面，先生成了一个`TaskManager`对象来封装taskSet,然后判断当前stage中是否只正常运行一个taskSet，以及taskManager是否是僵尸进程；
-随后将生成的TaskManager放入到`schedulableBuilder`调度策略中，做完以上工作后开始想backend申请资源`backend.reviveOffers()`;
+DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,打开TaskScheduler的实现类TaskSchedulerImpl,在这个方法里面，先生成了一个TaskManager对象来封装taskSet,然后判断当前stage中是否只正常运行一个taskSet，以及taskManager是否是僵尸进程；随后将生成的TaskManager放入到schedulableBuilder调度策略中，做完以上工作后开始想backend申请资源`backend.reviveOffers()`;
 
 ```scala
   override def submitTasks(taskSet: TaskSet) {
@@ -67,21 +65,21 @@ tags:
   }
 ```
 
-我们进入`CoarseGrainedSchedulerBackend`的`reviveOffers`方法，可以看到在方法里面`driverEndpoint`向自己发送了一个`ReviveOffers`消息，而
-这个`driverEndpoint`我们前面也讲过，就是当前应用程序的Driver;
+我们进入CoarseGrainedSchedulerBackend的reviveOffers方法，可以看到在方法里面driverEndpoint向自己发送了一个ReviveOffers消息，而这个driverEndpoint我们前面也讲过，就是当前应用程序的Driver;
+
 ```scala
   override def reviveOffers() {
     driverEndpoint.send(ReviveOffers)
   }
 ```
 
-进入`driverEndpoint`的`reviveOffers`方法，最终调用的是`makeOffers()`方法,
+进入`driverEndpoint`的`reviveOffers`方法，最终调用的是`makeOffers()`方法,在这个方法里面先过滤出状态为alive的executor，然后将这些activeExecutor封装成WorkerOffer对象，关键点是在最后的`lanchTasks`方法，我们先看下`scheduler.resourceOffers(workOffers)`这个方法的作用；
 
 ```scala
    case ReviveOffers =>
      makeOffers()
-```
-```scala
+
+
     // Make fake resource offers on all executors
     private def makeOffers() {
       // Filter out executors under killing
@@ -93,4 +91,108 @@ tags:
     }
 ```
 
+我们再回到TaskSchedulerImpl,查看resourceOffers方法，在方法内部先将可用的executors添加到数据结构中，然后在将可用的executors进行shuffle以便做到负载均衡，为每个executor创建一个task数组用于存放TaskDescription，最后遍历调度策略中的TaskSet,使用就近原则为task分配executor，在这里需要腔调一点的是在`DAGScheduler.submitMissingTasks()`方法中我们是获取了每个task的对应数据的位置，而在本方法中的`taskSet.myLocalityLevels) `是为了获取Task对应数据位置的级别,如下代码所示:
 
+```scala
+  def resourceOffers(offers: Seq[WorkerOffer]): Seq[Seq[TaskDescription]] = synchronized {
+    // Mark each slave as alive and remember its hostname
+    // Also track if new executor is added
+    //todo 标记是否有新的executor
+    var newExecAvail = false
+    //todo 遍历每个executor
+    for (o <- offers) {
+      //todo 向数据结构中添加executor信息
+      executorIdToHost(o.executorId) = o.host
+      executorIdToTaskCount.getOrElseUpdate(o.executorId, 0)
+      if (!executorsByHost.contains(o.host)) {
+        executorsByHost(o.host) = new HashSet[String]()
+        executorAdded(o.executorId, o.host)
+        newExecAvail = true
+      }
+      for (rack <- getRackForHost(o.host)) {
+        hostsByRack.getOrElseUpdate(rack, new HashSet[String]()) += o.host
+      }
+    }
+
+    // Randomly shuffle offers to avoid always placing tasks on the same set of workers.
+    //todo 将可用的executor进行shuffle打乱,以便做到负载均衡
+    val shuffledOffers = Random.shuffle(offers)
+    // Build a list of tasks to assign to each worker.
+    //todo 为每个executor构建一个task数组
+    val tasks = shuffledOffers.map(o => new ArrayBuffer[TaskDescription](o.cores))
+    //todo 所有executor可用的core资源
+    val availableCpus = shuffledOffers.map(o => o.cores).toArray
+    //todo 从调度池中获取TaskSetManagers
+    val sortedTaskSets = rootPool.getSortedTaskSetQueue
+    for (taskSet <- sortedTaskSets) {
+      logDebug("parentName: %s, name: %s, runningTasks: %s".format(
+        taskSet.parent.name, taskSet.name, taskSet.runningTasks))
+      if (newExecAvail) {
+        taskSet.executorAdded()
+      }
+    }
+
+    // Take each TaskSet in our scheduling order, and then offer it each node in increasing order
+    // of locality levels so that it gets a chance to launch local tasks on all of them.
+    // NOTE: the preferredLocality order: PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY
+    //todo 我们在DAGScheduler.submitMissingTasks()中已经获取了每个Task中数据所在的位置，这是的taskSet.myLocalityLevels
+    //todo 只是根据Task数据所在的host来获取它的的数据本地性级别(PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY)
+    var launchedTask = false
+    //todo  对每一个taskSet，按照就近顺序分配最近的executor来执行task
+    for (taskSet <- sortedTaskSets; maxLocality <- taskSet.myLocalityLevels) {
+      do {
+        //todo 将前面随机打散的WorkOffers计算资源按照就近原则分配给taskSet，用于执行其中的task
+        launchedTask = resourceOfferSingleTaskSet(
+            taskSet, maxLocality, shuffledOffers, availableCpus, tasks)
+      } while (launchedTask)
+    }
+
+    if (tasks.size > 0) {
+      hasLaunchedTask = true
+    }
+    return tasks
+  }
+
+```
+
+接着进入`resourceOfferSingleTaskSet`方法,
+
+```scala
+  private def resourceOfferSingleTaskSet(
+      taskSet: TaskSetManager,
+      maxLocality: TaskLocality,
+      shuffledOffers: Seq[WorkerOffer],
+      availableCpus: Array[Int],
+      tasks: Seq[ArrayBuffer[TaskDescription]]) : Boolean = {
+    var launchedTask = false
+    //todo 遍历所有的executor
+    for (i <- 0 until shuffledOffers.size) {
+      val execId = shuffledOffers(i).executorId
+      val host = shuffledOffers(i).host
+      //todo 判断该executor可以用的资源是否>=CPUS_PER_TASK(默认为1)
+      if (availableCpus(i) >= CPUS_PER_TASK) {
+        try {
+          for (task <- taskSet.resourceOffer(execId, host, maxLocality)) {
+            //todo 将每个task信息写入下面的数据结构中
+            tasks(i) += task
+            val tid = task.taskId
+            taskIdToTaskSetManager(tid) = taskSet
+            taskIdToExecutorId(tid) = execId
+            executorIdToTaskCount(execId) += 1
+            executorsByHost(host) += execId
+            availableCpus(i) -= CPUS_PER_TASK
+            assert(availableCpus(i) >= 0)
+            launchedTask = true
+          }
+        } catch {
+          case e: TaskNotSerializableException =>
+            logError(s"Resource offer failed, task set ${taskSet.name} was not serializable")
+            // Do not offer resources for this task, but don't throw an error to allow other
+            // task sets to be submitted.
+            return launchedTask
+        }
+      }
+    }
+    return launchedTask
+  }
+```
