@@ -14,11 +14,10 @@ tags:
 >Spark源码之TaskScheduler介绍篇
 > 
 
+### TaskScheduler
+前面DAGScheduler将stage划分好之后,又将生成的TaskSet提交给TaskScheduler,那么本章节就要叙述下TaskScheduler如何启动Task的；
 
-前面`DAGScheduler`将stage划分好之后,又将生成的TaskSet提交给`TaskScheduler`,那么本章节就要叙述下`TaskScheduler`如何启动Task的；
-
-
-
+### TaskScheduler任务源码分析 
 DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,打开TaskScheduler的实现类TaskSchedulerImpl,在这个方法里面，先生成了一个TaskManager对象来封装taskSet,然后判断当前stage中是否只正常运行一个taskSet，以及taskManager是否是僵尸进程；随后将生成的TaskManager放入到schedulableBuilder调度策略中，做完以上工作后开始想backend申请资源`backend.reviveOffers()`;
 
 ```scala
@@ -91,7 +90,9 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
     }
 ```
 
-我们再回到TaskSchedulerImpl,查看resourceOffers方法，在方法内部先将可用的executors添加到数据结构中，然后在将可用的executors进行shuffle以便做到负载均衡，为每个executor创建一个task数组用于存放TaskDescription，最后遍历调度策略中的TaskSet,使用就近原则为task分配executor，在这里需要腔调一点的是在`DAGScheduler.submitMissingTasks()`方法中我们是获取了每个task的对应数据的位置，而在本方法中的`taskSet.myLocalityLevels) `是为了获取Task对应数据位置的级别,如下代码所示:
+我们再回到TaskSchedulerImpl,查看resourceOffers方法：  
+TaskSchedulerImpl.resourceOffers:为每一个Task具体分配计算资源，输入时ExecutorBackend以及可用的Cores，输出是 TaskDescription的二维数组，在其中确定了每个task具体运行在哪个ExecutorBackend；  
+在方法内部先将可用的executors添加到数据结构中，然后在将可用的executors进行shuffle以便做到负载均衡，为每个executor创建一个task数组用于存放TaskDescription，最后遍历调度策略中的TaskSet,使用就近原则为task分配executor，在这里需要腔调一点的是`DAGScheduler.submitMissingTasks()`方法中我们是获取了每个task的对应数据的位置，而在本方法中的`taskSet.myLocalityLevels) `是为了获取Task对应数据位置的级别,如下代码所示:
 
 ```scala
   def resourceOffers(offers: Seq[WorkerOffer]): Seq[Seq[TaskDescription]] = synchronized {
@@ -262,3 +263,10 @@ DAGScheduler将TaskSet提交给TaskScheduler,那么就先看下`submitTasks()`,�
     threadPool.execute(tr)
   }
 ```
+
+### 总结：
+DAGScheduler划分好stage，并将生成的TaskSet提交给TaskScheduler，TaskScheduler向Driver请求分配资源，Driver将可用的ExecutorBackend资源发给TaskScheduler，在TaskScheduler中将Task分配给ExecutorBackend，最后向ExecutorBackend发送launchTask请求，在ExecutorBackend中调executor对象的launchTask，在Executor对象的launchTask方法中启动TaskRunner线程并用线程池去执行TaskRunner线程;
+
+
+
+
