@@ -52,7 +52,7 @@ SchedulerBackend是一个接口，根据具体的ClusterManager的不同会有�
   
 再进入createTaskScheduler()方法,在这个方法内是根据集群以什么方式启动的来实例出相应的TaskScheduler，ScheduleBackend的子类；
 
-```
+```scala
 private def createTaskScheduler(
       sc: SparkContext,
       master: String): (SchedulerBackend, TaskScheduler) = {
@@ -87,7 +87,7 @@ private def createTaskScheduler(
 
 我们以Standalone模式为例讲解,参看下图源码，可见TaskScheduler实例的子类为TaskSchedulerImpl，SchedulerBackend的实例化的子类是SparkDeploySchedulerBackend;
 
-```
+```scala
 case SPARK_REGEX(sparkUrl) =>
         val scheduler = new TaskSchedulerImpl(sc)
         val masterUrls = sparkUrl.split(",").map("spark://" + _)
@@ -105,7 +105,7 @@ case SPARK_REGEX(sparkUrl) =>
  
 我们进入SparkDeploySchedulerBackend代码中，首先看它的start()方法；
 
-```
+```scala
  override def start() {
     super.start()
     launcherBackend.connect()
@@ -132,7 +132,7 @@ case SPARK_REGEX(sparkUrl) =>
     
 在SparkDeploySchedulerBackend的Start()方法中，super.start()其实执行的是它的父类CoarseGrainedSchedulerBackend的start方法，如下代码所示,可以看到执行了createDriverEndpoint(properties)方法，我们进入看下，在createDriverEndpoint()方法中实例化了一个DriverEndpoint，而DriverEndpoint其实是一个消息循环体,其实这个DriverEndPoint就是Spark应用程序中的Driver，他内部可以接收处理其他组件发来的消息；
 
-```
+```scala
   override def start() {
     val properties = new ArrayBuffer[(String, String)]
     for ((key, value) <- scheduler.sc.conf.getAll) {
@@ -170,7 +170,7 @@ case SPARK_REGEX(sparkUrl) =>
 在SparkDeploySchedulerBackend的Start()方法中执行完super.start()后，进行一系列的参数配置后，就开始了Spark应用程序的处理,如下源码所示:
 在这里实例化出APPClient对象,并调用client.start()方法,进入APPClient的start()方法,在这个方法里new了一个ClientEndpoint实例,其实ClientEndpoint他也是一个消息循环体;
 
-```
+```scala
     // Start executors with a few necessary configs for registering with the scheduler
     val sparkJavaOpts = Utils.sparkJavaOpts(conf, SparkConf.isExecutorStartupConf)
     val javaOpts = sparkJavaOpts ++ extraJavaOpts
@@ -194,7 +194,7 @@ case SPARK_REGEX(sparkUrl) =>
 如下代码所示:
 这个跟worker向Master注册差不多，向每个Master发送RegisterApplication的消息,Master接收到注册消息并处理;
 
-```
+```scala
     //ClientEndpoint的onStart()方法
     override def onStart(): Unit = {
       try {
@@ -265,7 +265,7 @@ case SPARK_REGEX(sparkUrl) =>
 在Application提交时有个重要的地方，如下图所示,在appDesc中有个command,是这样的:
 当通过SparkDeploySchedulerBackend注册程序给Master的时候会把上述command提交给master，master发指令给Worker去启动Excutor所在的进程的时候加载main方法所在的入口类，就是command中的CoarseGrainedExcutorBackend，当然你也可以自己实现excutorBackend！CoarseGrainedExecutorBackend中启动Executor（Excutor是先注册再实例化的）,Excutor通过线程池并发执行Task！关于Executor部分我们随后详细阐述；
 
-```
+```scala
     // Start executors with a few necessary configs for registering with the scheduler
     val sparkJavaOpts = Utils.sparkJavaOpts(conf, SparkConf.isExecutorStartupConf)
     val javaOpts = sparkJavaOpts ++ extraJavaOpts
