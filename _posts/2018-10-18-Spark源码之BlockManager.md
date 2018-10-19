@@ -52,8 +52,8 @@ val blockManager = new BlockManager(executorId, rpcEnv, blockManagerMaster,
    }.orNull
  env.rpcEnv.setupEndpoint("Executor", new CoarseGrainedExecutorBackend(
    env.rpcEnv, driverUrl, executorId, sparkHostPort, cores, userClassPath, env))
-```
-```scala
+
+
 //todo 在BlockManager中会实例化出BlockManagerSlaveEndpoint实例
 private val slaveEndpoint = rpcEnv.setupEndpoint(
   "BlockManagerEndpoint" + BlockManager.ID_GENERATOR.next,
