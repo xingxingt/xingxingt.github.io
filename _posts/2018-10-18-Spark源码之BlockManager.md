@@ -136,4 +136,65 @@ private def register(id: BlockManagerId, maxMemSize: Long, slaveEndpoint: RpcEnd
 }
 ```
 
+### BlockManager的工作
+
+我们先叙述下BlockManager将block信息上报给Master的操作：  
+1.在BlockManager中的reportAllBlocks方法,遍历所有的的blockInfo准备上报给Master;   
+2.接着进入tryToReportBlockStatus方法,在该方法中调用BlockManagerMaster的updateBlockInfo方法;  
+3.在BlockManager的updateBlockInfo方法中可以看到向driverEndpoint发送UpdateBlockInfo消息;  
+4.UpdateBlockInfo收到UpdateBlockInfo消息，然后再进一步调用自身内部的UpdateBlockInfo操作,具体方法这里不再叙述，主要是去更改维护driverEndpoint中的blockManagerInfo信息;  
+参照如下代码: 
+```scala
+//1.blockManager中的reportAllBlocks方法
+private def reportAllBlocks(): Unit = {
+  logInfo(s"Reporting ${blockInfo.size} blocks to the master.")
+  for ((blockId, info) <- blockInfo) {
+    val status = getCurrentBlockStatus(blockId, info)
+    if (!tryToReportBlockStatus(blockId, info, status)) {
+      logError(s"Failed to report $blockId to master; giving up.")
+      return
+    }
+  }
+}
+
+//2.blockManager中的tryToReportBlockStatus方法
+private def tryToReportBlockStatus(
+    blockId: BlockId,
+    info: BlockInfo,
+    status: BlockStatus,
+    droppedMemorySize: Long = 0L): Boolean = {
+  if (info.tellMaster) {
+    val storageLevel = status.storageLevel
+    val inMemSize = Math.max(status.memSize, droppedMemorySize)
+    val inExternalBlockStoreSize = status.externalBlockStoreSize
+    val onDiskSize = status.diskSize
+    master.updateBlockInfo(
+      blockManagerId, blockId, storageLevel, inMemSize, onDiskSize, inExternalBlockStoreSize)
+  } else {
+    true
+  }
+}
+
+//3.BlockManagerMaster中的updateBlockInfo方法
+def updateBlockInfo(
+    blockManagerId: BlockManagerId,
+    blockId: BlockId,
+    storageLevel: StorageLevel,
+    memSize: Long,
+    diskSize: Long,
+    externalBlockStoreSize: Long): Boolean = {
+  val res = driverEndpoint.askWithRetry[Boolean](
+    UpdateBlockInfo(blockManagerId, blockId, storageLevel,
+      memSize, diskSize, externalBlockStoreSize))
+  logDebug(s"Updated info of block $blockId")
+  res
+}
+
+//4,driverEndpoint收到UpdateBlockInfo的信息
+case _updateBlockInfo @ UpdateBlockInfo(
+  blockManagerId, blockId, storageLevel, deserializedSize, size, externalBlockStoreSize) 
+  context.reply(updateBlockInfo(
+    blockManagerId, blockId, storageLevel, deserializedSize, size, externalBlockStoreSize
+  listenerBus.post(SparkListenerBlockUpdated(BlockUpdatedInfo(_updateBlockInfo)))
+```
 
