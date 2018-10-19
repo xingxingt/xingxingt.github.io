@@ -60,4 +60,80 @@ private val slaveEndpoint = rpcEnv.setupEndpoint(
   new BlockManagerSlaveEndpoint(rpcEnv, this, mapOutputTracker))
 ```
 
+### BlockManager的注册
+
+我们再来看下BlockManager是如何向BlockManagerMaster注册的,在BlockManager实例化后调用initialize方法,在此方法内执行了BlockManagerMaster.registerBlockManager方法；
+
+```scala
+//blockManager的initialize方法
+def initialize(appId: String): Unit = {
+  blockTransferService.init(this)
+  shuffleClient.init(appId)
+  blockManagerId = BlockManagerId(
+    executorId, blockTransferService.hostName, blockTransferService.port)
+  shuffleServerId = if (externalShuffleServiceEnabled) {
+    logInfo(s"external shuffle service port = $externalShuffleServicePort")
+    BlockManagerId(executorId, blockTransferService.hostName, externalShuffleServicePort)
+  } else {
+    blockManagerId
+  }
+  master.registerBlockManager(blockManagerId, maxMemory, slaveEndpoint)
+  // Register Executors' configuration with the local shuffle service, if one should exist.
+  if (externalShuffleServiceEnabled && !blockManagerId.isDriver) {
+    registerWithExternalShuffleServer()
+  }
+```
+
+进入BlockManagerMaster的registerBlockManager方法,可以看到它向master endpoint发送消息,其实这里的Driver就是BlockManagerMasterEndpoint
+
+```scala
+ /** Register the BlockManager's id with the driver. */
+ def registerBlockManager(
+     blockManagerId: BlockManagerId, maxMemSize: Long, slaveEndpoint: RpcEndpointRef): Unit = {
+   logInfo("Trying to register BlockManager")
+   tell(RegisterBlockManager(blockManagerId, maxMemSize, slaveEndpoint))
+   logInfo("Registered BlockManager")
+ }  
+ 
+ /** Send a one-way message to the master endpoint, to which we expect it to reply with true. */
+ private def tell(message: Any) {
+   if (!driverEndpoint.askWithRetry[Boolean](message)) {
+     throw new SparkException("BlockManagerMasterEndpoint returned false, expected true.")
+   }
+ }
+```
+
+我们再进入BlockManagerMasterEndpoint中,可以看到这里接收到BlockManager的注册，然后调用register方法;
+
+```scala
+override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
+  case RegisterBlockManager(blockManagerId, maxMemSize, slaveEndpoint) =>
+    register(blockManagerId, maxMemSize, slaveEndpoint)
+    context.reply(true)
+```
+
+进入register方法中会看到有一个blockManagerInfo数据结构，这个数据结构存储所有slave注册的BlockManager信息;到这里ExecutorBackend中的BlockManager信息向Driver(BlockManagerMasterEndpoint)注册完毕;Driver端会维护所有ExecutorBackend上的BlockManager信息;
+
+```scala
+private def register(id: BlockManagerId, maxMemSize: Long, slaveEndpoint: RpcEndpointR
+  val time = System.currentTimeMillis()
+  if (!blockManagerInfo.contains(id)) {
+    blockManagerIdByExecutor.get(id.executorId) match {
+      case Some(oldId) =>
+        // A block manager of the same executor already exists, so remove it (assumed 
+        logError("Got two different block manager registrations on same executor - "
+            + s" will replace old one $oldId with new one $id")
+        removeExecutor(id.executorId)
+      case None =>
+    }
+    logInfo("Registering block manager %s with %s RAM, %s".format(
+      id.hostPort, Utils.bytesToString(maxMemSize), id))
+    blockManagerIdByExecutor(id.executorId) = id
+    blockManagerInfo(id) = new BlockManagerInfo(
+      id, System.currentTimeMillis(), maxMemSize, slaveEndpoint)
+  }
+  listenerBus.post(SparkListenerBlockManagerAdded(time, id, maxMemSize))
+}
+```
+
 
