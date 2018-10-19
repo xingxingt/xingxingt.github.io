@@ -347,9 +347,9 @@ private def doPut(
     ......
 ```
 
-BlockManager之block数据的读取： 
-获取数据时数据可能存在本地，也可能存在其他节点上,所以就有两个方法doGetLocal和doGetRmote,我们先看doGetLocal
-1.做双重检测 检查block是否存在;  
+BlockManager之block数据的读取：   
+获取数据时数据可能存在本地，也可能存在其他节点上,所以就有两个方法doGetLocal和doGetRmote,我们先看doGetLocal;  
+1.做双重检测 检查block是否存在;    
 2.如果有其他的线程正在往这个块中写数据，则向该block块改为只读状态;  
 3.如果block使用的是memory，则使用memoryStore获取数据;  
 4.如果block使用的是offheap，则使用externalBlockStore获取数据;  
