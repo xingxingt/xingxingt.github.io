@@ -138,7 +138,7 @@ private def register(id: BlockManagerId, maxMemSize: Long, slaveEndpoint: RpcEnd
 
 ### BlockManager的内部工作
 
-我们先叙述下BlockManager将block信息上报给Master的操作：  
+BlockManager之block信息上报：  
 1.在BlockManager中的reportAllBlocks方法,遍历所有的的blockInfo准备上报给Master;   
 2.接着进入tryToReportBlockStatus方法,在该方法中调用BlockManagerMaster的updateBlockInfo方法;  
 3.在BlockManager的updateBlockInfo方法中可以看到向driverEndpoint发送UpdateBlockInfo消息;  
@@ -198,15 +198,15 @@ case _updateBlockInfo @ UpdateBlockInfo(
   listenerBus.post(SparkListenerBlockUpdated(BlockUpdatedInfo(_updateBlockInfo)))
 ```
 
-
-再看下BlockManager是如何将数据写入到指定StroreLevel的，不管是putArray还是putBytes，内部都是调用doPut来完成的,那么我们来看下doPut是如何完成数据的写入的,这个方法比较长我们分解解释;  
-1.先判断该block和storeLevel是否为空;
-2.构建putBlockInfo,既即将put的数据对象;
-3.根据storeLevel判断使用哪种Blockstore，以及是否返回put操作的值;
-4.开始使用blockStore真正的put数据;
-5.如果使用的内存，则要将溢出的部分添加到updatedBlocks中;
-6.执行putBlockInfo.markReady(size),表示put数据结束，并唤醒其他线程;
-7.如果副本个数>1就开始异步复制数据到其他节点;
+BlockManager之block数据写入到指定StroreLevel：  
+不管是putArray还是putBytes，内部都是调用doPut来完成的,那么我们来看下doPut是如何完成数据的写入的,这个方法比较长我们分解解释;   
+1.先判断该block和storeLevel是否为空;  
+2.构建putBlockInfo,既即将put的数据对象;  
+3.根据storeLevel判断使用哪种Blockstore，以及是否返回put操作的值;  
+4.开始使用blockStore真正的put数据;  
+5.如果使用的内存，则要将溢出的部分添加到updatedBlocks中;  
+6.执行putBlockInfo.markReady(size),表示put数据结束，并唤醒其他线程;  
+7.如果副本个数>1就开始异步复制数据到其他节点;  
 
 ```scala
 private def doPut(
