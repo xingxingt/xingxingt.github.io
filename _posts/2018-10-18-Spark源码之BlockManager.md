@@ -136,7 +136,7 @@ private def register(id: BlockManagerId, maxMemSize: Long, slaveEndpoint: RpcEnd
 }
 ```
 
-### BlockManager的工作
+### BlockManager的内部工作
 
 我们先叙述下BlockManager将block信息上报给Master的操作：  
 1.在BlockManager中的reportAllBlocks方法,遍历所有的的blockInfo准备上报给Master;   
@@ -197,4 +197,158 @@ case _updateBlockInfo @ UpdateBlockInfo(
     blockManagerId, blockId, storageLevel, deserializedSize, size, externalBlockStoreSize
   listenerBus.post(SparkListenerBlockUpdated(BlockUpdatedInfo(_updateBlockInfo)))
 ```
+
+
+再看下BlockManager是如何将数据写入到指定StroreLevel的，不管是putArray还是putBytes，内部都是调用doPut来完成的,那么我们来看下doPut是如何完成数据的写入的,这个方法比较长我们分解解释;  
+1.先判断该block和storeLevel是否为空;
+2.构建putBlockInfo,既即将put的数据对象;
+3.根据storeLevel判断使用哪种Blockstore，以及是否返回put操作的值;
+4.开始使用blockStore真正的put数据;
+5.如果使用的内存，则要将溢出的部分添加到updatedBlocks中;
+6.执行putBlockInfo.markReady(size),表示put数据结束，并唤醒其他线程;
+7.如果副本个数>1就开始异步复制数据到其他节点;
+
+```scala
+private def doPut(
+      blockId: BlockId,
+      data: BlockValues,
+      level: StorageLevel,
+      tellMaster: Boolean = true,
+      effectiveStorageLevel: Option[StorageLevel] = None)
+    : Seq[(BlockId, BlockStatus)] = {
+     
+    //todo 1.判断该block和storeLevel是否为空;
+    require(blockId != null, "BlockId is null")
+    require(level != null && level.isValid, "StorageLevel is null or invalid")
+    effectiveStorageLevel.foreach { level =>
+      require(level != null && level.isValid, "Effective StorageLevel is null or invalid")
+    }
+
+    //todo 2.构建putBlockInfo
+    val putBlockInfo = {
+      //todo 生成BlockInfo
+      val tinfo = new BlockInfo(level, tellMaster)
+      // Do atomically !
+      //todo 将tinfo存入内存中
+      val oldBlockOpt = blockInfo.putIfAbsent(blockId, tinfo)
+      //todo 判断该blockInfo是否存在
+      if (oldBlockOpt.isDefined) {
+        if (oldBlockOpt.get.waitForReady()) {
+          logWarning(s"Block $blockId already exists on this machine; not re-adding it")
+          return updatedBlocks
+        }
+        // TODO: So the block info exists - but previous attempt to load it (?) failed.
+        // What do we do now ? Retry on it ?
+        oldBlockOpt.get
+      } else {
+        tinfo
+      }
+    }
+    
+    //todo 将这个putBlockInfo加锁，防止其他线程操作该blockInfo
+    putBlockInfo.synchronized {
+      logTrace("Put for block %s took %s to get into synchronized block"
+        .format(blockId, Utils.getUsedTimeMs(startTimeMs)))
+      var marked = false
+      try {
+        // returnValues - Whether to return the values put
+        // blockStore - The type of storage to put these values into
+        //todo 3.根据storeLevel判断使用哪种Blockstore，以及是否返回put操作的值
+        val (returnValues, blockStore: BlockStore) = {
+          if (putLevel.useMemory) {
+            // Put it in memory first, even if it also has useDisk set to true;
+            // We will drop it to disk later if the memory store can't hold it.
+            (true, memoryStore)
+          } else if (putLevel.useOffHeap) {
+            // Use external block store
+            (false, externalBlockStore)
+          } else if (putLevel.useDisk) {
+            // Don't get back the bytes from put unless we replicate them
+            (putLevel.replication > 1, diskStore)
+          } else {
+            assert(putLevel == StorageLevel.NONE)
+            throw new BlockException(
+              blockId, s"Attempted to put block $blockId without specifying storage level!")
+          }
+        }
+        // Actually put the values
+        //todo 4.开始使用blockStore真正的put数据
+        val result = data match {
+          case IteratorValues(iterator) =>
+            blockStore.putIterator(blockId, iterator, putLevel, returnValues)
+          case ArrayValues(array) =>
+            blockStore.putArray(blockId, array, putLevel, returnValues)
+          case ByteBufferValues(bytes) =>
+            bytes.rewind()
+            blockStore.putBytes(blockId, bytes, putLevel)
+        }
+        size = result.size
+        result.data match {
+          case Left (newIterator) if putLevel.useMemory => valuesAfterPut = newIterator
+          case Right (newBytes) => bytesAfterPut = newBytes
+          case _ =>
+        }
+        // Keep track of which blocks are dropped from memory
+        //todo 5.如果使用的内存，则要将溢出的部分添加到updatedBlocks中
+        if (putLevel.useMemory) {
+          result.droppedBlocks.foreach { updatedBlocks += _ }
+        }
+        //todo 获取当前block的状态
+        val putBlockStatus = getCurrentBlockStatus(blockId, putBlockInfo)
+        if (putBlockStatus.storageLevel != StorageLevel.NONE) {
+          // Now that the block is in either the memory, externalBlockStore, or disk store,
+          // let other threads read it, and tell the master about it.
+          marked = true
+          //todo 6.表示该block已经put完成
+          putBlockInfo.markReady(size)
+          if (tellMaster) {
+            //todo 向Master汇报block信息
+            reportBlockStatus(blockId, putBlockInfo, putBlockStatus)
+          }
+          updatedBlocks += ((blockId, putBlockStatus))
+        }
+      } finally {
+        // If we failed in putting the block to memory/disk, notify other possible readers
+        // that it has failed, and then remove it from the block info map.
+        if (!marked) {
+          // Note that the remove must happen before markFailure otherwise another thread
+          // could've inserted a new BlockInfo before we remove it.
+          blockInfo.remove(blockId)
+          putBlockInfo.markFailure()
+          logWarning(s"Putting block $blockId failed")
+        }
+      }
+    }
+    
+    //todo 7.如果副本个数>1就开始异步复制数据
+    if (putLevel.replication > 1) {
+      data match {
+        case ByteBufferValues(bytes) =>
+          if (replicationFuture != null) {
+            Await.ready(replicationFuture, Duration.Inf)
+          }
+        case _ =>
+          val remoteStartTime = System.currentTimeMillis
+          // Serialize the block if not already done
+          if (bytesAfterPut == null) {
+            if (valuesAfterPut == null) {
+              throw new SparkException(
+                "Underlying put returned neither an Iterator nor bytes! This shouldn't happen.")
+            }
+            bytesAfterPut = dataSerialize(blockId, valuesAfterPut)
+          }
+          //todo 将数复制到其他节点上
+          replicate(blockId, bytesAfterPut, putLevel)
+          logDebug("Put block %s remotely took %s"
+            .format(blockId, Utils.getUsedTimeMs(remoteStartTime)))
+      }
+    }
+    
+    ......
+```
+
+
+
+
+
 
