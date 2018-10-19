@@ -347,8 +347,132 @@ private def doPut(
     ......
 ```
 
+BlockManager之block数据的读取：
+获取数据时数据可能存在本地，也可能存在其他节点上,所以就有两个方法doGetLocal和doGetRmote,我们先看doGetLocal
+1.做双重检测 检查block是否存在;
+2.如果有其他的线程正在往这个块中写数据，则向该block块改为只读状态;
+3.如果block使用的是memory，则使用memoryStore获取数据;
+4.如果block使用的是offheap，则使用externalBlockStore获取数据;
+5.如果block使用的是disk，则使用diskStore获取数据,在这里需要说一下，如果数据存放在Disk中，那么spark会再次判断该block是否能够存入磁盘中，如果可以则将block数据放入到memory中，以便再下一次使用的时候可以直接从memory中或者以提高效率;
 
 
+```scala
+private def doGetLocal(blockId: BlockId, asBlockResult: Boolean): Option[Any] = {
+  val info = blockInfo.get(blockId).orNull
+  if (info != null) {
+    info.synchronized {
+     
+      //todo 这里做了双重检测 检查block是否存在
+      if (blockInfo.get(blockId).isEmpty) {
+        logWarning(s"Block $blockId had been removed")
+        return None
+      }
+      
+     // If another thread is writing the block, wait for it to become ready.
+     //todo 如果有其他的线程正在往这个块中写数据，则向该block块改为只读状态
+     if (!info.waitForReady()) {
+       // If we get here, the block write failed.
+       logWarning(s"Block $blockId was marked as failure.")
+       return None
+     }
 
+     //todo  如果block使用的是memory，则使用memoryStore获取数据
+     if (level.useMemory) {
+       logDebug(s"Getting block $blockId from memory")
+       val result = if (asBlockResult) {
+         memoryStore.getValues(blockId).map(new BlockResult(_, DataReadMethod.Memory, info.size))
+       } else {
+         memoryStore.getBytes(blockId)
+       }
+       result match {
+         case Some(values) =>
+           return result
+         case None =>
+           logDebug(s"Block $blockId not found in memory")
+       }
+     } 
+     
+    //todo  如果block使用的是offheap，则使用externalBlockStore获取数据
+    if (level.useOffHeap) {
+      logDebug(s"Getting block $blockId from ExternalBlockStore")
+      if (externalBlockStore.contains(blockId)) {
+        val result = if (asBlockResult) {
+          externalBlockStore.getValues(blockId)
+            .map(new BlockResult(_, DataReadMethod.Memory, info.size))
+        } else {
+          externalBlockStore.getBytes(blockId)
+        }
+        result match {
+          case Some(values) =>
+            return result
+          case None =>
+            logDebug(s"Block $blockId not found in ExternalBlockStore")
+        }
+      }
+    }
+
+     //todo  如果block使用的是disk，则使用diskStore获取数据
+     if (level.useDisk) {
+       logDebug(s"Getting block $blockId from disk")
+       val bytes: ByteBuffer = diskStore.getBytes(blockId) match {
+         case Some(b) => b
+         case None =>
+           throw new BlockException(
+             blockId, s"Block $blockId not found on disk, though it should be")
+       }
+       assert(0 == bytes.position())
+       //todo 判断该block是否使用memory存储，如果不可以则直接返回数据
+       if (!level.useMemory) {
+         // If the block shouldn't be stored in memory, we can just return it
+         if (asBlockResult) {
+           return Some(new BlockResult(dataDeserialize(blockId, bytes), DataReadMethod.Disk,
+             info.size))
+         } else {
+           return Some(bytes)
+         }
+       } else {
+         // Otherwise, we also have to store something in the memory store
+         if (!level.deserialized || !asBlockResult) {
+           /* We'll store the bytes in memory if the block's storage level includes
+            * "memory serialized", or if it should be cached as objects in memory
+            * but we only requested its serialized bytes. */
+           memoryStore.putBytes(blockId, bytes.limit, () => {
+             // https://issues.apache.org/jira/browse/SPARK-6076
+             // If the file size is bigger than the free memory, OOM will happen. So if we cannot
+             // put it into MemoryStore, copyForMemory should not be created. That's why this
+             // action is put into a `() => ByteBuffer` and created lazily.
+             val copyForMemory = ByteBuffer.allocate(bytes.limit)
+             copyForMemory.put(bytes)
+           })
+           bytes.rewind()
+         }
+         if (!asBlockResult) {
+           return Some(bytes)
+         } else {
+           val values = dataDeserialize(blockId, bytes)
+           if (level.deserialized) {
+             // Cache the values before returning them
+             //todo 如果允许使用memory存储，则将查询出来的数据写入到memory中
+             //todo 这样下次再查找该block数据直接从内存获取，以提高速度
+             val putResult = memoryStore.putIterator(
+               blockId, values, level, returnValues = true, allowPersistToDisk = false)
+             // The put may or may not have succeeded, depending on whether there was enough
+             // space to unroll the block. Either way, the put here should return an iterator.
+             putResult.data match {
+               case Left(it) =>
+                 return Some(new BlockResult(it, DataReadMethod.Disk, info.size))
+               case _ =>
+                 // This only happens if we dropped the values back to disk (which is never)
+                 throw new SparkException("Memory store did not return an iterator!")
+             }
+           } else {
+             return Some(new BlockResult(values, DataReadMethod.Disk, info.size))
+           }
+         }
+       }
+     }
+     
+     ......
+```
 
 
