@@ -347,12 +347,12 @@ private def doPut(
     ......
 ```
 
-BlockManager之block数据的读取：
+BlockManager之block数据的读取： 
 获取数据时数据可能存在本地，也可能存在其他节点上,所以就有两个方法doGetLocal和doGetRmote,我们先看doGetLocal
-1.做双重检测 检查block是否存在;
-2.如果有其他的线程正在往这个块中写数据，则向该block块改为只读状态;
-3.如果block使用的是memory，则使用memoryStore获取数据;
-4.如果block使用的是offheap，则使用externalBlockStore获取数据;
+1.做双重检测 检查block是否存在;  
+2.如果有其他的线程正在往这个块中写数据，则向该block块改为只读状态;  
+3.如果block使用的是memory，则使用memoryStore获取数据;  
+4.如果block使用的是offheap，则使用externalBlockStore获取数据;  
 5.如果block使用的是disk，则使用diskStore获取数据,在这里需要说一下，如果数据存放在Disk中，那么spark会再次判断该block是否能够存入磁盘中，如果可以则将block数据放入到memory中，以便再下一次使用的时候可以直接从memory中或者以提高效率;
 
 
