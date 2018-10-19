@@ -475,4 +475,47 @@ private def doGetLocal(blockId: BlockId, asBlockResult: Boolean): Option[Any] = 
      ......
 ```
 
+在doGetRemote方法中主要是使用blockTransferService从其他节点获取数据，如下代码所示:
 
+```scala
+private def doGetRemote(blockId: BlockId, asBlockResult: Boolean): Option[Any] = {
+  require(blockId != null, "BlockId is null")
+  //todo 将存在该block的所有节点打散
+  val locations = Random.shuffle(master.getLocations(blockId))
+  var numFetchFailures = 0
+  for (loc <- locations) {
+    logDebug(s"Getting remote block $blockId from $loc")
+    val data = try {
+      //todo 使用blockTransferService从其他节点获取数据
+      blockTransferService.fetchBlockSync(
+        loc.host, loc.port, loc.executorId, blockId.toString).nioByteBuffer()
+    } catch {
+      case NonFatal(e) =>
+        numFetchFailures += 1
+        if (numFetchFailures == locations.size) {
+          // An exception is thrown while fetching this block from all locations
+          throw new BlockFetchException(s"Failed to fetch block from" +
+            s" ${locations.size} locations. Most recent failure cause:", e)
+        } else {
+          // This location failed, so we retry fetch from a different one by returning null here
+          logWarning(s"Failed to fetch remote block $blockId " +
+            s"from $loc (failed attempt $numFetchFailures)", e)
+          null
+        }
+    }
+    if (data != null) {
+      if (asBlockResult) {
+        return Some(new BlockResult(
+          dataDeserialize(blockId, data),
+          DataReadMethod.Network,
+          data.limit()))
+      } else {
+        return Some(data)
+      }
+    }
+    logDebug(s"The value of block $blockId is null")
+  }
+  logDebug(s"Block $blockId not found")
+  None
+}
+```
