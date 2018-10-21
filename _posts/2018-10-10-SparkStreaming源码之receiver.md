@@ -95,16 +95,16 @@ private def launchReceivers(): Unit = {
 详细源代码如下:  
 
 ```scala
-    override def receive: PartialFunction[Any, Unit] = {
-      // Local messages
-      case StartAllReceivers(receivers) =>
-        val scheduledLocations = schedulingPolicy.scheduleReceivers(receivers, getExecutors)
-        for (receiver <- receivers) {
-          val executors = scheduledLocations(receiver.streamId)
-          updateReceiverScheduledExecutors(receiver.streamId, executors)
-          receiverPreferredLocations(receiver.streamId) = receiver.preferredLocation
-          startReceiver(receiver, executors)
-        }
+ override def receive: PartialFunction[Any, Unit] = {
+   // Local messages
+   case StartAllReceivers(receivers) =>
+     val scheduledLocations = schedulingPolicy.scheduleReceivers(receivers, getExecutors)
+     for (receiver <- receivers) {
+       val executors = scheduledLocations(receiver.streamId)
+       updateReceiverScheduledExecutors(receiver.streamId, executors)
+       receiverPreferredLocations(receiver.streamId) = receiver.preferredLocation
+       startReceiver(receiver, executors)
+     }
 ```
 
 进入startReceiver方法，该方法主要是启动一个receiver和对应的executor；  
