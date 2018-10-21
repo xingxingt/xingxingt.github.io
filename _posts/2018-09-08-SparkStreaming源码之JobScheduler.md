@@ -14,7 +14,7 @@ tags:
 >SparkStreaming源码之JobScheduler篇
 > 
 
-#### 首先看下JobScheduler这个类是在什么时候被实例化的，打开StreamingContext代码可见：
+首先看下JobScheduler这个类是在什么时候被实例化的，打开StreamingContext代码可见：
 ```scala
   private[streaming] val scheduler = new JobScheduler(this)
 
@@ -23,7 +23,7 @@ tags:
   private[streaming] val progressListener = new StreamingJobProgressListener(this)
 ```
 
-#### 再看下job的产生者jobGenerator是如何将生成的job传递给JobScheduler的
+再看下job的产生者jobGenerator是如何将生成的job传递给JobScheduler的
 ```scala
   /** Generate jobs and perform checkpoint for the given `time`.  */
   private def generateJobs(time: Time) {
@@ -60,7 +60,7 @@ tags:
   }
 ```
 
-### SparkStreaming在一个Application中能够同时运行多个job的，其实就是使用多线程来实现
+SparkStreaming在一个Application中能够同时运行多个job的，其实就是使用多线程来实现
 ```scala
   //todo jobSet数据结构
   private val jobSets: java.util.Map[Time, JobSet] = new ConcurrentHashMap[Time, JobSet]
@@ -70,7 +70,7 @@ tags:
     ThreadUtils.newDaemonFixedThreadPool(numConcurrentJobs, "streaming-job-executor"
 ```
 
-### JobScheduler负责job的调度，在内部是使用一个消息循环体来处理job的各种事件，而这个消息循环体也是在JobSchduler的start方法中实例化
+JobScheduler负责job的调度，在内部是使用一个消息循环体来处理job的各种事件，而这个消息循环体也是在JobSchduler的start方法中实例化
 ```scala
   def start(): Unit = synchronized {
     if (eventLoop != null) return // scheduler has already been started
@@ -99,7 +99,7 @@ tags:
   }
 ```
 
-### 看下这个消息循环体具体的内容，可见Job的启动，完成，还有错误处理都在这里，具体方法可以点进去看
+看下这个消息循环体具体的内容，可见Job的启动，完成，还有错误处理都在这里，具体方法可以点进去看
 ```scala
   private def processEvent(event: JobSchedulerEvent) {
     try {
@@ -115,7 +115,7 @@ tags:
   }
 ```
 
-### 现在看下一个job的启动，在SubmitJobSet方法，JobExecutor线程池去执行每个JobHandler
+现在看下一个job的启动，在SubmitJobSet方法，JobExecutor线程池去执行每个JobHandler
 ```scala
   def submitJobSet(jobSet: JobSet) {
     if (jobSet.jobs.isEmpty) {
@@ -129,7 +129,7 @@ tags:
     }
   }
 ```
-### 看下jobHandler这个线程的run方法
+看下jobHandler这个线程的run方法
 ```scala
   private class JobHandler(job: Job) extends Runnable with Logging {
     import JobScheduler._
@@ -176,7 +176,7 @@ tags:
   }
 }
 ```
-### 看下最终的run方法,这个run方法执行的是job的输出代码的方法，例如print操作产生的job
+看下最终的run方法,这个run方法执行的是job的输出代码的方法，例如print操作产生的job
 ```scala
 private[streaming]
 class Job(val time: Time, func: () => _) {
@@ -212,6 +212,6 @@ class Job(val time: Time, func: () => _) {
   }  
 ```
 
-### 至此 JobScheduler角色的工作以叙述完毕！
+**至此 JobScheduler角色的工作以叙述完毕！**
 
 
