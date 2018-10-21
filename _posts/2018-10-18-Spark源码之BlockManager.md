@@ -521,5 +521,12 @@ private def doGetRemote(blockId: BlockId, asBlockResult: Boolean): Option[Any] =
 ```
 
 ### BlockStore
+BlockStore的作用就是在存储block块信息时，客户端不需要关心Store的内部实现（DiskStore,MemoryStore,ExternalBlockStore）细节，一切交给blockManager这个对外的方法类通过指定存储级别去管理；  
+MemoryStore是BlockManager中专门负责基于内存的数据存储和读写的类；  
+DiskStore是BlockManager中专门负责基于磁盘的数据存储和读写的类；  
+DiskBlockManager管理Logical Block与Disk上的Physical Block之间的映射关系并负责磁盘的文件创建和读写；  
+BlockTransferService负责不同机子上block通信；  
+
+![](https://ws1.sinaimg.cn/large/006tNbRwgy1fwfpknl2a0j316g0u63zj.jpg)
 
 
