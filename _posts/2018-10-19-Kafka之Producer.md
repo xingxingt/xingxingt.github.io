@@ -120,10 +120,18 @@ tags:
 2.然后就调用producer.send(recoder)进行发送；  
 3.而KafkaProducer接收到消息后会先对其进行序列化，然后结合本地缓存的元数据信息一起发送给partitioner去确定目标分区；  
 4.确认分区后追加写入到内存中的消息缓冲池(accumulator),此时的send方法完成；  
-5.最后发送给服务端Broker,服务器对生产者做出相应,至此消息发送完毕；  
+5.最后发送给服务端Broker,服务器对生产者做出响应,至此消息发送完毕；  
 
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fwi7kfqmgtj30i906umxc.jpg)
 
 
+**Kafka生产者的内部原理**  
+下面将详细展开Kafka生产者的工作原理；  
+ProducerRecord和KafkaProducer的产生就不说了,那就先说下消息的序列化和确定目标分区,如果消息是属于字符串的那么就可以直接使用StringSerializer，如果是对象之类的话可以使用Avro，Thrift,Protobuf或者自定义序列化器;传输的对象序列化后结合KafkaProducer共同传递给后面的Partitioner实现类进行目标分区的计算,当然这里我们可以使用我们自定义的分区，直接实现Partitioner，重写它的partition方法即可;
 
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fwi89by8doj30k103u0sp.jpg)
+
+
+
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fwiamnrl8bj30nr09tmxh.jpg)
 
