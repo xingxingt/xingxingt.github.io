@@ -127,11 +127,29 @@ tags:
 
 **Kafka生产者的内部原理**  
 下面将详细展开Kafka生产者的工作原理；  
-ProducerRecord和KafkaProducer的产生就不说了,那就先说下消息的序列化和确定目标分区,如果消息是属于字符串的那么就可以直接使用StringSerializer，如果是对象之类的话可以使用Avro，Thrift,Protobuf或者自定义序列化器;传输的对象序列化后结合KafkaProducer共同传递给后面的Partitioner实现类进行目标分区的计算,当然这里我们可以使用我们自定义的分区，直接实现Partitioner，重写它的partition方法即可;
+ProducerRecord和KafkaProducer的产生就不说了,那就先说下消息的序列化和确定目标分区,如果消息是属于字符串的那么就可以直接使用StringSerializer，如果是对象之类的话可以使用Avro，Thrift,Protobuf或者自定义序列化器;传输的对象序列化后结合KafkaProducerr缓存的元数据共同传递给后面Partitioner实现类进行目标分区的计算,当然这里我们可以使用我们自定义的分区，直接实现Partitioner，重写它的partition方法即可;
 
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fwi89by8doj30k103u0sp.jpg)
 
+序列化和计算完分区之后便要向缓冲区追加消息,producer创建时会创建一个默认32MB(由buffer.memory参数指定)的accumulator缓冲区，专门保存待发送的消息。该数据结构中还包含了一个特别重要的集合信息：消息批次信息(batches)。该集合本质上是一个HashMap，里面分别保存了每个topic分区下的batch队列，即前面说的批次是按照topic分区进行分组的。这样发往不同分区的消息保存在对应分区下的batch队列中。举个简单的例子，假设消息M1, M2被发送到test的0分区但属于不同的batch，M3分送到test的1分区，那么batches中包含的信息就是：{"test-0" -> [batch1, batch2], "test-1" -> [batch3]};  
 
+单个topic分区下的batch队列中保存的是若干个消息批次。每个batch中最重要的3个组件包括：  
+compressor: 负责执行追加写入操作  
+batch缓冲区：由batch.size参数控制，消息被真正追加写入到的地方  
+thunks：保存消息回调逻辑的集合  
 
 ![](https://ws3.sinaimg.cn/large/006tNbRwly1fwiamnrl8bj30nr09tmxh.jpg)
+
+当消息被追加到缓冲区后就需要将消息发送给Broker了，那么这个动作谁来做呢?其实在KafkaProducer创建完成后会有一个IO线程即Sender线程,它负责将缓冲区的消息发送至Broker;  
+具体的工作流程:  
+1.不断轮询缓冲区寻找已做好发送准备的分区;  
+2.将轮询获得的各个batch按照目标分区所在的leader broker进行分组;  
+3.将分组后的batch通过底层创建的Socket连接发送给各个broker;  
+4.等待服务器端发送response回来;  
+
+![](https://ws1.sinaimg.cn/large/006tNbRwgy1fwii7gbd4rj30nr09tmxh.jpg)
+
+如果我们发送消息的时候使用的是同步方法，则会一直等待服务器端的相应，如果是异步的话会在callback中获取到服务器的相应,在上面我们已经将消息发送至服务端，如果Broker处理完毕后会就会做出相应,broker会把响应信息发给Sender线程,然后Sender线程会依次往回传递，直至callback函数，如下图所示;
+
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwiiriktyvj30g20773yj.jpg)
 
