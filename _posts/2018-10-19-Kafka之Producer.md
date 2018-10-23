@@ -14,6 +14,7 @@ tags:
 >Kafka之Producer篇
 >
 
+**Kafka生产者案例**  
 本篇我们叙述Kafka是如何将数据发送到服务端的;  
 首先我们来看下案例,如下代码所示，这是一个简单的将消息发送到服务端的例子,首先配置链接Kafka的参数,然后用生成的配置生成一个KafkaProducer,这个就是kafka的生产者,紧接着生成一个ProducerRecord用于封装要发送的消息,最终调用producer.send(recoder)将消息发送至服务端,这个Demo比较粗糙;    
 消息发送有两种方式:    
@@ -69,6 +70,51 @@ tags:
 }
 ```
 
+**Kafka生产者常用参数配置**  
+
+    ack机制：
+    Ack=0:生产者在成功写入消息之前不会等待任何服务器的响应；
+    Ack=1:只要集群的leader接收到消息，生产者就会收到一个来自服务器的成功响应；
+    Ack=all：只有当所有参与与复制的服务器全部都收到消息时，生产者才能收到一个来自服务器的成功响应；
+
+    Buffer.memory
+    用来设置生产者内存缓冲区的大小，生产者用这个来缓冲要发送到broker的消息；
+    
+    Comperession.type
+    指定消息在发送给broker之前采用哪种压缩方式，snappy,gzip,lz4…..
+    
+    Retries
+    生产者有可能会收到服务器的错误，它指定生产者可以重发消息的次数，如果达到这个次数生产者会放弃重试并返回错误；
+    
+    Batch.size
+    指定一个批次可以使用的内存大小，按照字节来计算；
+    
+    Lingers.ms
+    指定在生产者在发送批次之前等待更多的消息加入批次的时间，以便提高吞吐量；
+    
+    Client.id
+    消息id
+    
+    Max.in.flight.request.per.connection
+    指定生产者在收到服务器相应之前可以发送多少个消息；设置为1，可以保证消息按照发送的顺序写入服务器，即使发生重试；
+    
+    Request.timeout.ms
+    指定生产者再发送数据时等待服务器返回相应的时间；
+
+    Metadata.fatch.timeout.ms
+    指定生产者在获取元数据时等待服务器返回响应的时间；
+    
+    Timeout.ms
+    指定broker等待同步副本返回消息确认的时间，与ask搭配使用；
+    
+    Max.block.ms
+    指定调用send()或者partitionsFor()方法获取元数据时阻塞的时间；
+    
+    Max.request.size
+    控制单条消息的最大值；
+
+
+**Kafka生产者的工作原理**  
 上面介绍了Kafka如何生产数据的,下面我们来看下Kafka的数据生产的工作流程，如下图所示，根据上面的Demo我们可以看的出:  
 1.我们先构建了一个KafkaProducer，然后就构建出了ProducerRecord；  
 2.然后就调用producer.send(recoder)进行发送；  
