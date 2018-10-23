@@ -163,6 +163,6 @@ thunks：保存消息回调逻辑的集合
 
 参考:  
 《Kafka权威指南》  
-http://www.cnblogs.com/huxi2b/p/6364613.html  
+ http://www.cnblogs.com/huxi2b/p/6364613.html  
 
 
