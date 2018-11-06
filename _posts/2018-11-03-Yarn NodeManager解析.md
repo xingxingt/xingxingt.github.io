@@ -20,9 +20,9 @@ NodeManager是Yarn中单节点的代理，它管理Hadoop集群中单个计算�
 
 ### NodeManager基本职能
 NodeManager通过两个RPC协议与RM和各个ApplicationMaster进行通信:   
-**1.ResourceTrackerProtocol**
-NodeManager通过该RPC协议向RM注册，汇报节点的健康状态以及Container的运行状态，并领取RM下发的命令例如重新初始化Container，清理Container等；在这个协议总NodeManager主动向RM发请求，RM相应NodeManager的请求；该RPC的代码如下:  
-```proto
+**1.ResourceTrackerProtocol协议**  
+NodeManager通过该RPC协议向RM注册，汇报节点的健康状态以及Container的运行状态，并领取RM下发的命令例如重新初始化Container，清理Container等；在这个协议总NodeManager主动向RM发请求，RM相应NodeManager的请求；该RPC协议的代码如下:  
+```protobuf
 option java_package = "org.apache.hadoop.yarn.proto";
 option java_outer_classname = "ResourceTracker";
 option java_generic_services = true;
@@ -38,6 +38,35 @@ service ResourceTrackerService {
   rpc nodeHeartbeat(NodeHeartbeatRequestProto) returns (NodeHeartbeatResponseProto);
 }
 ```
+
+**2.ContainerManagementProtocol协议**   
+应用程序的ApplicationMaster通过该协议与NodeManager通信发起针对Container的命令操作，例如：启动，杀死Container，获取Container的运行状态等;在该协议中ApplicationMaster主动向NodeManager发送请求，NodeManager接收到请求做出相应,该RPC协议的代码如下:  
+```protobuf
+option java_package = "org.apache.hadoop.yarn.proto";
+option java_outer_classname = "ContainerManagementProtocol";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+package hadoop.yarn;
+
+import "yarn_service_protos.proto";
+
+service ContainerManagementProtocolService {
+  //AM通过该函数要求NM启动一个Container
+  rpc startContainers(StartContainersRequestProto) returns (StartContainersResponseProto);
+  //AM通过该函数要求NM杀死一个Container
+  rpc stopContainers(StopContainersRequestProto) returns (StopContainersResponseProto);
+  //AM通过该函数获取Container的运行状态
+  rpc getContainerStatuses(GetContainerStatusesRequestProto) returns (GetContainerStatusesResponseProto);
+}
+
+```
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fwygj7y9nij31cw0y0gns.jpg)
+
+
+
+
+
+
 
 
 
