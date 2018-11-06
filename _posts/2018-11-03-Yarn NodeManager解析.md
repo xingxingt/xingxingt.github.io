@@ -97,7 +97,7 @@ NodeHealthScriptRunner服务主要工作是周期性的执行节点健康状况�
 自定义脚本案例如下:  
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fwyiicsulnj31go0f4q4w.jpg)
 
-第二种: 判断磁盘的好坏，NodeManager上有一个周期性的执行脚本监测磁盘的好坏，默认的情况下该功能是开启的，该功能由LocalDirsHandlerService服务实现的，它周期性的任务检测NodeManager本地磁盘的好坏，并通过心跳将健康状态汇报给RM；NodeManager有两个目录一个是本地可用的目录列表用于存放程序或者任务的中间结果，另一个是日志目录，而LocalDirsHandlerService服务就是检测这些目录的好坏，一旦发现正常磁盘的比例低于设定的值(默认0.25)则将节点置为不健康状态;
+第二种: 判断磁盘的好坏，NodeManager上有一个周期性的执行脚本监测磁盘的好坏，默认的情况下该功能是开启的，该功能由LocalDirsHandlerService服务实现的，它周期性的任务检测NodeManager本地磁盘的好坏，并通过心跳将健康状态汇报给RM；NodeManager有两个目录一个是本地可用的目录列表用于存放程序或者任务的中间结果，另一个是日志目录，而LocalDirsHandlerService服务就是检测这些目录的好坏，一旦发现正常磁盘的比例低于设定的值(yarn.nodemanager.disk-health-checker.min-healthy-disks默认0.25)则将节点置为不健康状态;
 
 
 
