@@ -125,6 +125,42 @@ Yarn的分布式缓存工作流程如下:
 2. file : 普通文件，NM只是将这类文件下载到本地目录，不做任何处理；
 3. pattern: 以上两种文件的混合体；
 
+注意点:  
+1. YARN是通过比较resource、type、timestamp和pattern四个字段是否相同来判断两个资源请求是否相同的。如果一个已经被缓存到各个节点上的文件被用户修改了，则下次使用时会自动触发一次缓存更新，以重新从HDFS上下载文件。
+2. 分布式缓存完成的主要功能是文件下载，涉及大量的磁盘读写，因此整个过程采用了异步并发模型加快文件下载速度，以避免同步模型带来的性能开销。为了防止缓存过多磁盘被撑爆，NM会采用LRU算法定期清理这些文件;
+
+
+### 目录结构  
+
+NodeManager上的目录可分为两种:  
+1. **数据目录**: 存放执行Container所需的数据(比如可执行程序或JAR包、配置文件等)和运行过程中产生的临时数据,由yarn.nodemanager.local-dirs指定;
+2. **日志目录**: 存放Container运行输出日志，由yarn.nodemanager.log-dirs指定;
+
+NM在每个磁盘上为该作业创建相同的目录结构，且采用轮询的调度方式将目录（磁盘）分配给不同的Container的不同模块以避免干扰。  
+考虑到一个应用程序的不同Container之间存在依赖，为了避免提前清除已经完成的Container输出的中间数据破坏应用程序的设计逻辑，YARN统一规定，只有当应用程序运行结束后，才统一清楚Container产生的中间数据。
+
+### 状态机管理
+
+NM维护了三类状态机，分别是:Application、Container和LocalizedResource,它们均直接或者间接参与维护一个应用程序的生命周期;  
+当NodeManager收到来自某个应用程序第一次Container启动命令时，会创建一个Application状态机跟踪该应用程序在该结点上的生命周期，而每个Container的运行过程同样由一个状态机维护。此外Application所需的资源(比如文本文件、JAR包、归档文件等）需要从HDFS上下载，每个资源的下载过程均由一个状态机LocalizedResouce维护和跟踪。  
+
+状态机如下：  
+1. **Application状态机**  
+NM上Application维护的信息是RM端Application信息的子集，这有利于对一个节点上的同一个Application的所有Container进行统一管理（比如记录每一个Application运行在该节点上的Container列表，杀死一个Application的所有Container等）。它实际的实现类是ApplicationImpl，该类维护了一个Application状态机，记录了Application可能存在的各个状态以及导致状态间转换的事件。需要注意的是NM上的Application生命周期与ResourceManager上Application的生命周期是一致的。
+
+2. **Container状态机**   
+Container是NM中用于维护Container生命周期的数据结构，它的是现实ContainerImpl，该类维护了一个Container的状态机，记录了Container可能存在的各种状态以及导致状态转换的事件;
+
+3. ** LocalizedResource状态机**   
+LocalizedResource是NodeManager中维护一种“资源”(资源文件、JAR包、归档文件等外部文件资源)生命周期的数据结构，它维护了一个状态，记录了"资源"可能存在的各种状态以及导致状态间转换的事件。
+
+
+
+
+
+
+
+
 
 
 
