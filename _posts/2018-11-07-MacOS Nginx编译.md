@@ -50,7 +50,7 @@ tags:
 ![](https://ws2.sinaimg.cn/large/006tNbRwly1fwzadwsmr1j30qm0betam.jpg) 
 
 Google了一把说是10版本不支持,好，那我更换8版本，下载了pcre-8.41版本，又重新编译一遍，Nice!问题得到解决；
-![](https://ws2.sinaimg.cn/large/006tNbRwly1fwzai2o2t0j30qi0dyaca.jpg)
+![](https://ws2.sinaimg.cn/large/006tNbRwgy1fwzawadjdpj31b00rkgtj.jpg)
 
 PCRE搞定后再回到Nginx的编译，执行如下命令,查看日志一切正常:
 
