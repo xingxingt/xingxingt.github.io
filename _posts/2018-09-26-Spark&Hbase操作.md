@@ -185,4 +185,6 @@ Spark读取HBase，我们主要使用SparkContext 提供的newAPIHadoopRDDAPI/sa
 
 #####  [个人详细案例请点击这里](https://github.com/xingxingt/centrecode/tree/master/src/main/scala/cn/spark/hbase)
 
+**使用Spark通过BulkLoad快速导入数据到HBase案例： **    
+https://mp.weixin.qq.com/s/-Id4NIwMA1JtwAD1dXheAA 
 
