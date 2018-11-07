@@ -151,7 +151,7 @@ NM上Application维护的信息是RM端Application信息的子集，这有利于
 2. **Container状态机**   
 Container是NM中用于维护Container生命周期的数据结构，它的是现实ContainerImpl，该类维护了一个Container的状态机，记录了Container可能存在的各种状态以及导致状态转换的事件;
 
-3. ** LocalizedResource状态机**   
+3. **LocalizedResource状态机**   
 LocalizedResource是NodeManager中维护一种“资源”(资源文件、JAR包、归档文件等外部文件资源)生命周期的数据结构，它维护了一个状态，记录了"资源"可能存在的各种状态以及导致状态间转换的事件。
 
 
