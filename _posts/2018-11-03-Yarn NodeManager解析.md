@@ -84,7 +84,7 @@ NodeManager的内部架构如下图所示:
 
 ### NodeManager的事件与事件处理器 
 NodeManager主要组件也是通过事件进行交互的，这使得组件能够异步并发完成各种功能；如下图所示:  
-![](https://ws3.sinaimg.cn/large/006tNbRwly1fwyhp6e140j31g817c0x9.jpg)
+![](https://ws3.sinaimg.cn/large/006tNbRwly1fwzip0pg3gj31gm188td9.jpg)
 
 ### 节点健康状态监测
 节点健康状态监测是NodeManager自带的健康状态诊断机制，通过该机制，NodeManager可以时刻的掌握资深的健康状况，并及时的汇报给RM，RM根据节点的健康状况调整分配的任务数目;如果NodeManager监测到自身的状态为“unhealthy”,则通知RM不再为该节点分配任务，直到状态转为"healthy"再向该节点分配任务;
@@ -98,6 +98,32 @@ NodeHealthScriptRunner服务主要工作是周期性的执行节点健康状况�
 ![](https://ws4.sinaimg.cn/large/006tNbRwly1fwyiicsulnj31go0f4q4w.jpg)
 
 第二种: 判断磁盘的好坏，NodeManager上有一个周期性的执行脚本监测磁盘的好坏，默认的情况下该功能是开启的，该功能由LocalDirsHandlerService服务实现的，它周期性的任务检测NodeManager本地磁盘的好坏，并通过心跳将健康状态汇报给RM；NodeManager有两个目录一个是本地可用的目录列表用于存放程序或者任务的中间结果，另一个是日志目录，而LocalDirsHandlerService服务就是检测这些目录的好坏，一旦发现正常磁盘的比例低于设定的值(yarn.nodemanager.disk-health-checker.min-healthy-disks默认0.25)则将节点置为不健康状态;
+
+### 分布式缓存
+**分布式缓存介绍**  
+在Yarn中，分布式缓存是一中分布式文件分发和缓存机制，主要作用是将用户应用程序需要的外部文件资源自动透明的下载并缓存到各个节点上，从而省去了用户手动部署的麻烦，**注意，这里的分布式缓存并不是将文件缓存到集群各个节点的内存中,而是将文件缓存到各个节点的本地磁盘上;**  
+Yarn的分布式缓存工作流程如下:  
+![](https://ws1.sinaimg.cn/large/006tNbRwly1fwzigj76l1j31j00uy0vv.jpg)
+1. 客户端将应用程序所需的文件资源提交到HDFS上;
+2. 客户端将应用程序提交给RM；
+3. RM与某个NM通信，启动应用程序的ApplicationMaster，NodeManager收到命令后，先从HDFS上下载文件资源，然后启动ApplicationMaster；
+4. ApplicationMaster与RM通信请求获取计算资源；
+5. ApplicationMaster收到RM分配的资源后与NM通信启动任务；
+6. 如果该应用程序第一次再该节点上启动任务，则NN先从HDFS上下载文件资源缓存在本地，然后再启动任务；
+7. NM后续在收到启动任务的请求时，先判断所需的文件资源是否已经下载到本地，如果没有下载到本地则等待文件缓存完毕后再启动任务;
+
+**资源可见性和分类**  
+分布式缓存机制是由各个NM实现的，主要功能是将应用程序所需的文件资源缓存到本地，以便后续任务的使用，资源缓存是用时触发的，也就是第一个用到该资源的任务触发，后续任务无需再进行缓存，直接使用即可；  
+根据可见性,NM将资源分为三类：  
+1. Public:节点上所有的用户都可以共享该资源，只要有一个用户的应用程序将着这些资源缓存到本地，其他所有用户的所有应用程序都可以使用；
+2. Private: 节点上同一用户的所有应用程序共享该资源,只要该用户其中一个应用程序将资源缓存到本地，该用户的所有应用程序都可以使用；
+3. Application: 节点上同一应用程序的所有Container共享该资源;
+![](https://ws4.sinaimg.cn/large/006tNbRwly1fwzj0izs48j31d20mawjs.jpg)
+
+根据资源类型，NM向资源分为三类：  
+1. archive: 归档文件,支持.jar,.zip,.tar.gz,.tgz,.tar5中归档文件；
+2. file : 普通文件，NM只是将这类文件下载到本地目录，不做任何处理；
+3. pattern: 以上两种文件的混合体；
 
 
 
