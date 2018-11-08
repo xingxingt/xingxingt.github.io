@@ -126,8 +126,8 @@ Yarn的分布式缓存工作流程如下:
 3. pattern: 以上两种文件的混合体；
 
 注意点:  
-1. YARN是通过比较resource、type、timestamp和pattern四个字段是否相同来判断两个资源请求是否相同的。如果一个已经被缓存到各个节点上的文件被用户修改了，则下次使用时会自动触发一次缓存更新，以重新从HDFS上下载文件。
-2. 分布式缓存完成的主要功能是文件下载，涉及大量的磁盘读写，因此整个过程采用了异步并发模型加快文件下载速度，以避免同步模型带来的性能开销。为了防止缓存过多磁盘被撑爆，NM会采用LRU算法定期清理这些文件;
+1. **YARN是通过比较resource、type、timestamp和pattern四个字段是否相同来判断两个资源请求是否相同的。如果一个已经被缓存到各个节点上的文件被用户修改了，则下次使用时会自动触发一次缓存更新，以重新从HDFS上下载文件。**
+2. **分布式缓存完成的主要功能是文件下载，涉及大量的磁盘读写，因此整个过程采用了异步并发模型加快文件下载速度，以避免同步模型带来的性能开销。为了防止缓存过多磁盘被撑爆，NM会采用LRU算法定期清理这些文件;**
 
 
 ### 目录结构  
@@ -153,6 +153,32 @@ Container是NM中用于维护Container生命周期的数据结构，它的是现
 
 3. **LocalizedResource状态机**   
 LocalizedResource是NodeManager中维护一种“资源”(资源文件、JAR包、归档文件等外部文件资源)生命周期的数据结构，它维护了一个状态，记录了"资源"可能存在的各种状态以及导致状态间转换的事件。
+
+### Container生命周期
+Container启动命令是由各个ApplicationMaster通过RPC函数`ContainerManager.startContainer()`向NodeManager发起的；
+Container启动过程主要经历三个阶段：  **资源本地化、启动container,运行container、资源回收**;
+
+**资源本地化**    
+资源本地化是指准备container运行所需的环境，包括创建container工作目录，从HDFS下载运行container所需的各种资源（jar包、可执行文件等）等。
+
+YARN将资源分为两类，一类是public级别的资源，这类资源被放到一个公共目录下，由所有用户共享，另一类是private级别的资源，这类资源是用户私有的，只能在所属用户的各个作业间共享。资源本地化过程实际上就是准备public和private资源的过程，它由ResourceLocalizationService服务完成，其中，所有application的public资源由专门的线程PublicLocalizer下载完成，该线程内部维护了一个线程池以加快资源下载速度，每个application的private资源由一个专门的线程LocalizerRunner下载完成。
+
+**启动container:**  
+启动Container是由ContainersLauncher完成的，该过程主要工作是将运行container对应的完整shell命令写到私有目录下的launch_container.sh中，并将token文件写到container_tokens中。之所以要将container运行命令写到launch_container.sh中，然后通过运行shell脚本的形式运行container，主要是因为直接执行命令可能会有些特殊符号不识别。
+
+**运行container**  
+而运行container是由插拔式组件ContainerExecutor完成的，YARN提供了两种ContainerExecutor实现，一种是DefaultContainerExecutor，另一种是LinuxContainerExecutor。DefaultContainerExecutor只是简单的以管理员身份运行launch_container.sh脚本，而LinuxContainerExecutor则是以container所属用户身份运行该脚本，它是Hadoop引入安全机制后加入的，此外，在不久的将来，container会引入cgroups隔离cpu资源，相关的代码也会存放在LinuxContainerExecutor中。
+
+**资源回收:**  
+Container运行完成后，NM需要回收它占用的资源，这些资源主要是Container运行时使用的临时文件；  
+资源回收由ResourceLocalizationService服务和ContainerExecutor组件完成的，该过程与资源本地化正好相反，它负责撤销container运行过程中使用的各种资源。  
+
+
+
+### 资源隔离
+YARN对内存资源和CPU资源采用了不同的资源隔离方案。  
+对于内存资源，为了能够更灵活的控制内存使用量，YARN采用了进程监控的方案控制内存使用，即每个NodeManager会启动一个额外监控线程监控每个container内存资源使用量，一旦发现它超过约定的资源量，则会将其杀死。采用这种机制的另一个原因是Java中创建子进程采用了fork()+exec()的方案，子进程启动瞬间，它使用的内存量与父进程一致，从外面看来，一个进程使用内存量可能瞬间翻倍，然后又降下来，采用线程监控的方法可防止这种情况下导致swap操作。   
+对于CPU资源，则采用了Cgroups进行资源隔离；
 
 
 
