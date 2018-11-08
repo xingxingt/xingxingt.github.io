@@ -145,13 +145,14 @@ NM维护了三类状态机，分别是:Application、Container和LocalizedResour
 当NodeManager收到来自某个应用程序第一次Container启动命令时，会创建一个Application状态机跟踪该应用程序在该结点上的生命周期，而每个Container的运行过程同样由一个状态机维护。此外Application所需的资源(比如文本文件、JAR包、归档文件等）需要从HDFS上下载，每个资源的下载过程均由一个状态机LocalizedResouce维护和跟踪。  
 
 状态机如下：  
-1. **Application状态机**  
+
+**Application状态机**  
 NM上Application维护的信息是RM端Application信息的子集，这有利于对一个节点上的同一个Application的所有Container进行统一管理（比如记录每一个Application运行在该节点上的Container列表，杀死一个Application的所有Container等）。它实际的实现类是ApplicationImpl，该类维护了一个Application状态机，记录了Application可能存在的各个状态以及导致状态间转换的事件。需要注意的是NM上的Application生命周期与ResourceManager上Application的生命周期是一致的。
 
-2. **Container状态机**   
+**Container状态机**   
 Container是NM中用于维护Container生命周期的数据结构，它的是现实ContainerImpl，该类维护了一个Container的状态机，记录了Container可能存在的各种状态以及导致状态转换的事件;
 
-3. **LocalizedResource状态机**   
+**LocalizedResource状态机**   
 LocalizedResource是NodeManager中维护一种“资源”(资源文件、JAR包、归档文件等外部文件资源)生命周期的数据结构，它维护了一个状态，记录了"资源"可能存在的各种状态以及导致状态间转换的事件。
 
 ### Container生命周期
