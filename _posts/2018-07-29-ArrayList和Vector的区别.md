@@ -115,6 +115,50 @@ tags:
 
 ```
 
+再看下两者的扩容方法，如下代码所示:  
+```java
+    /**
+     * ArrayList的扩容方法
+     * Increases the capacity to ensure that it can hold at least the
+     * number of elements specified by the minimum capacity argument.
+     *
+     * @param minCapacity the desired minimum capacity
+     */
+    private void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = elementData.length;
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        // minCapacity is usually close to size, so this is a win:
+        elementData = Arrays.copyOf(elementData, newCapacity);
+    }
+  
+//------------------------------------------------------------------------------------------    
+    
+    //Vector的扩容方法
+    private void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = elementData.length;
+        int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
+                                         capacityIncrement : oldCapacity);
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        elementData = Arrays.copyOf(elementData, newCapacity);
+    }
+```
+
+**总结**  
+无一例外，Vector只要是关键性的操作，方法前面都加了synchronized关键字，来保证线程的安全性。当执行synchronized修饰的方法前，系统会对该方法加一把锁，方法执行完成后释放锁，加锁和释放锁的这个过程，在系统中是有开销的;  
+和ArrayList和Vector一样，同样的类似关系的类还有HashMap和HashTable，StringBuilder和StringBuffer，后者是前者线程安全版本的实现;
+
+
+
+
 
 
 
