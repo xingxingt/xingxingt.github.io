@@ -14,6 +14,10 @@ tags:
 >ArrayList和Vector的区别
 > 
 
+
+
+
+
 **这里说下ArrayList和Vector的区别**       
 先看下java util包的类结构:  
 ![](https://ws1.sinaimg.cn/large/006tNbRwly1fxp2rgsnfej318s0q20tn.jpg)
