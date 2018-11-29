@@ -132,6 +132,7 @@ tags:
     private void grow(int minCapacity) {
         // overflow-conscious code
         int oldCapacity = elementData.length;
+        //todo 这里相当于int newCapacity = oldCapacity + (oldCapacity/2)
         int newCapacity = oldCapacity + (oldCapacity >> 1);
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
