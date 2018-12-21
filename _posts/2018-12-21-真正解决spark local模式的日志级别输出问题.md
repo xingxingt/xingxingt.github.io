@@ -27,5 +27,5 @@ spark工程源码中的log4j-defaults.properties是放在resources目录下的or
 然后修改log4j-defaults.properties：
 ![](https://ws4.sinaimg.cn/large/006tNbRwgy1fyedz55ewij31cy0tc40i.jpg)
 
-再次运行spark程序,完美解决:
+再次运行spark程序,Info日志被过滤,OK!完美解决:
 ![](https://ws1.sinaimg.cn/large/006tNbRwgy1fyee0e23xfj32fk0o03zw.jpg)
