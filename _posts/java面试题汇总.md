@@ -24,6 +24,7 @@
     double            8字节      
     char              2字节    
     boolean           1字节 
+    对也String来说，一个英文字符固定占1个字节，而中文字符占2个（GBK编码）或3个（UTF-8编码）字节
     
 #### int与integer的区别
     
