@@ -26,9 +26,13 @@
     boolean           1字节 
     对也String来说，一个英文字符固定占1个字节，而中文字符占2个（GBK编码）或3个（UTF-8编码）字节
     
-#### int与integer的区别
+#### int与Integer的区别
+    int和Integer最大的区别就是int是基本数据类型而Integer是包装类(复杂的数据类型)；
+    int是基本数据类型直接存放数据，而Integer是一个对象，用一个引用指向该对象；
     
-* 探探对java多态的理解
+#### 探讨对java多态的理解
+    
+
 * String、StringBuffer、StringBuilder区别
 * 什么是内部类？内部类的作用
 * 抽象类和接口区别
