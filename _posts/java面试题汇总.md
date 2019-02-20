@@ -33,7 +33,12 @@
 #### 探讨对java多态的理解
     
 
-* String、StringBuffer、StringBuilder区别
+#### String、StringBuffer、StringBuilder区别
+    String是一个字符串常量，Stringbuffer是一个字符串变量(线程安全的)，StringBuilder是字符串变量(非线程安全)
+    String 类型和 StringBuffer 类型的主要性能区别其实在于 String 是不可变的对象, 因此在每次对 String 类型进
+    行改变的时候其实都等同于生成了一个新的 String 对象，然后将指针指向新的 String 对象；
+    ref:https://www.imooc.com/article/22988
+
 * 什么是内部类？内部类的作用
 * 抽象类和接口区别
 * 抽象类的意义
