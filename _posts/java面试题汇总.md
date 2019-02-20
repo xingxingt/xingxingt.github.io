@@ -4,9 +4,29 @@
 
 ### 一、java基础面试知识点
 
-* java中==和equals和hashCode的区别
-* int、char、long各占多少字节数
-* int与integer的区别
+#### java中==和equals和hashCode的区别:
+    
+    ==是运算符，比较的是两个变量是否相等；
+    而equals是object的方法，比较的是两个对象的内存地址是否相等，跟==一样, 因为equals内部也是通过==来实现的；
+    hashcodey也是Object的方法，返回一个离散的int型整数,在集合操作类中使用,为了提高查询速度;
+    从而在集合操作的时候有如下规则：
+    将对象放入到集合中时，首先判断要放入对象的hashcode值与集合中的任意一个元素的hashcode值是否相等，如果不相等直接将该
+    对象放入集合中。 如果hashcode值相等，然后再通过equals方法判断要放入对象与集合中的任意一个对象是否相等，如果equals
+    判断不相等，直接将该元素放入到集合中，否则不放入。 回过来说get的时候，HashMap也先调key.hashCode()算出数组下标，
+    然后看equals如果是true就是找到了，所以就涉及了equals
+    
+#### int、char、long各占多少字节数:
+    int               4字节  
+    short             2字节    
+    long              8字节    
+    byte              1字节    
+    float             4字节   
+    double            8字节      
+    char              2字节    
+    boolean           1字节 
+    
+#### int与integer的区别
+    
 * 探探对java多态的理解
 * String、StringBuffer、StringBuilder区别
 * 什么是内部类？内部类的作用
