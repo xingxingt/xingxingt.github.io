@@ -97,10 +97,15 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     int:  一个utf-8数字占1个字节
 
 #### 静态代理和动态代理的区别，什么场景使用？
-      
-    ref:http://www.importnew.com/27772.html
+    静态代理的代理关系在编译的时候就已经确定了，而动态代理是在运行时才确定的，静态代理的实现比较简单，  
+    适合做代理类较少且确定的情况，而动态代理比较灵活，例如日志输出，访问控制，或者是一些复杂的附加逻辑，  
+    像spring的AOP等;  
+    ref:http://www.importnew.com/27772.html  
+        https://www.jianshu.com/u/5aff4598d8aa  
 
-* Java的异常体系
+#### Java的异常体系
+    http://www.importnew.com/26613.html
+    
 * 谈谈你对解析与分派的认识。
 * 修改对象A的equals方法的签名，那么使用HashMap存放这个对象实例的时候，会调用哪个equals方法？
 * Java中实现多态的机制是什么？
