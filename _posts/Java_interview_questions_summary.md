@@ -96,7 +96,10 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     中文: 字节数 3; 编码 UTF-8
     int:  一个utf-8数字占1个字节
 
-* 静态代理和动态代理的区别，什么场景使用？
+#### 静态代理和动态代理的区别，什么场景使用？
+      
+    ref:http://www.importnew.com/27772.html
+
 * Java的异常体系
 * 谈谈你对解析与分派的认识。
 * 修改对象A的equals方法的签名，那么使用HashMap存放这个对象实例的时候，会调用哪个equals方法？
