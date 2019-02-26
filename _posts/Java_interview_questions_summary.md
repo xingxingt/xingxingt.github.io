@@ -1,7 +1,7 @@
-# java面试题汇总
+# Java Interview Questions Summary
 ref:https://juejin.im/entry/578d938079bc44005ff26aec
 
-### 一、java基础面试知识点
+### 一、java基础知识点
 
 #### java中==和equals和hashCode的区别:
     
