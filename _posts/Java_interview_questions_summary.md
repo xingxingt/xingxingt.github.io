@@ -123,7 +123,9 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     ref:https://www.jianshu.com/p/985534b21089
     
 * Java中实现多态的机制是什么？
-* 如何将一个Java对象序列化到文件里？
+##### 如何将一个Java对象序列化到文件里？
+    ref:https://github.com/xingxingt/centrecode/blob/master/src/main/java/serializable/SerializableInputOutDemo.java
+    
 * 说说你对Java反射的理解
 * 说说你对Java注解的理解
 * 说说你对依赖注入的理解
