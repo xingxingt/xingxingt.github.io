@@ -104,10 +104,24 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
         https://www.jianshu.com/u/5aff4598d8aa  
 
 #### Java的异常体系
-    http://www.importnew.com/26613.html
+    Throwable是java异常体系的顶级父类，它有两个子类，分别是Error和Exception;   
+    Error是JVM系统级错误，例如内存溢出，栈溢出，而Exception是程序运行时发送的各种不期望的事件，可以被
+    java异常处理机制所使用;   
+    总体上异常机制又分为两类:  
+    非检查时异常:Error和Exception以及他们的子类,这类异常在javac编译时不会提示和发现这种异常，这种异常应该通过修正代码来解决
+    自定义非检查时异常通过扩展RuntimeExcetion；
+    检查时异常:除了Error和Exception之外的异常,javac强制要求程序员为这样的异常做预备处理(try,,catch,,finally或者throw),如：  
+    SQLException，IOException,ClassNotFoundException等, 通过继承Exception类自定义的异常类属于检查时异常;   
+    ref:http://www.importnew.com/26613.html  
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g0l9v63spfj30ya0lwgn2.jpg)    
     
-* 谈谈你对解析与分派的认识。
-* 修改对象A的equals方法的签名，那么使用HashMap存放这个对象实例的时候，会调用哪个equals方法？
+#### 谈谈你对解析与分派的认识。
+    
+
+#### 修改对象A的equals方法的签名，那么使用HashMap存放这个对象实例的时候，会调用哪个equals方法？
+    会调用对象的equals方法。
+    ref:https://www.jianshu.com/p/985534b21089
+    
 * Java中实现多态的机制是什么？
 * 如何将一个Java对象序列化到文件里？
 * 说说你对Java反射的理解
