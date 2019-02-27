@@ -35,3 +35,13 @@
 * spark 机器学习和 spark 图计算接触过没，，能举例说明你用它做过什么吗？
 
 * spark rdd 是怎么容错的，基本原理是什么？
+
+
+
+
+
+# Hadoop
+
+* https://blog.csdn.net/qq_36864672/article/details/78213304
+
+
