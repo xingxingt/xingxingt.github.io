@@ -123,10 +123,14 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     ref:https://www.jianshu.com/p/985534b21089
     
 * Java中实现多态的机制是什么？
+
 ##### 如何将一个Java对象序列化到文件里？
+    使用ObjectOutputStream将序列化后的对象写入文件，使用ObjectInputStream将序列化后的对象从文件中读取; 
     ref:https://github.com/xingxingt/centrecode/blob/master/src/main/java/serializable/SerializableInputOutDemo.java
     
-* 说说你对Java反射的理解
+#### 说说你对Java反射的理解
+    反射可以让程序在运行的时候能够动态的加载任意类的内部信息(方法,变量,构造函数...)
+    
 * 说说你对Java注解的理解
 * 说说你对依赖注入的理解
 * 说一下泛型原理，并举例说明
@@ -145,6 +149,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * List,Set,Map的区别
 * List和Map的实现方式以及存储方式
 * HashMap的实现原理
+  ref:http://www.importnew.com/31278.html#comment-742217
 * HashMap数据结构？
 * HashMap源码理解
 * HashMap如何put数据（从HashMap源码角度讲解）？
