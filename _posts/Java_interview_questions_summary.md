@@ -130,8 +130,12 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     
 #### 说说你对Java反射的理解
     反射可以让程序在运行的时候能够动态的加载任意类的内部信息(方法,变量,构造函数...)
+    ref:http://www.importnew.com/23560.html
     
-* 说说你对Java注解的理解
+#### 说说你对Java注解的理解
+    ref:http://www.importnew.com/23564.html
+        https://www.jianshu.com/p/51ffb289ccbe
+
 * 说说你对依赖注入的理解
 * 说一下泛型原理，并举例说明
 * Java中String的了解
