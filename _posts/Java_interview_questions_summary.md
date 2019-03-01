@@ -1,5 +1,6 @@
 # Java Interview Questions Summary
 ref:https://juejin.im/entry/578d938079bc44005ff26aec
+    https://www.jianshu.com/p/511fa4fbf3d5
 
 ### 一、java基础知识点
 
@@ -131,12 +132,15 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 #### 说说你对Java反射的理解
     反射可以让程序在运行的时候能够动态的加载任意类的内部信息(方法,变量,构造函数...)
     ref:http://www.importnew.com/23560.html
+        https://github.com/xingxingt/centrecode/tree/master/src/main/java/reflectdemo
     
 #### 说说你对Java注解的理解
+    注解为我们代码添加信息提供一种形式化的方法，可以使我们在稍后某个时刻使用这些数据(利用反射);
     ref:http://www.importnew.com/23564.html
         https://www.jianshu.com/p/51ffb289ccbe
 
 * 说说你对依赖注入的理解
+    ref:https://www.jianshu.com/p/506dcd94d4f9
 * 说一下泛型原理，并举例说明
 * Java中String的了解
 * String为什么要设计成不可变的？
