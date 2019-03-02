@@ -149,7 +149,11 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 
 ### 三、数据结构
 
-* 常用数据结构简介
+#### 常用数据结构简介
+    Collection:
+    List:LinkedList,ArrayList,Vector,Stack,Set
+    Map:HashMap,HashTable,WeakHashMap
+    
 * 并发集合了解哪些？
 * 列举java的集合以及集合之间的继承关系
 * 集合类以及集合框架
