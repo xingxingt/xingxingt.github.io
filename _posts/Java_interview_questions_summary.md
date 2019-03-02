@@ -1,5 +1,5 @@
 # Java Interview Questions Summary
-ref:https://juejin.im/entry/578d938079bc44005ff26aec
+ref:https://juejin.im/entry/578d938079bc44005ff26aec  
     https://www.jianshu.com/p/511fa4fbf3d5
 
 ### 一、java基础知识点
@@ -136,7 +136,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     
 #### 说说你对Java注解的理解
     注解为我们代码添加信息提供一种形式化的方法，可以使我们在稍后某个时刻使用这些数据(利用反射);
-    ref:http://www.importnew.com/23564.html
+    ref:http://www.importnew.com/23564.html  
         https://www.jianshu.com/p/51ffb289ccbe
 
 * 说说你对依赖注入的理解
@@ -156,7 +156,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 容器类介绍以及之间的区别（容器类估计很多人没听这个词，Java容器主要可以划分为4个部分：List列表、Set集合、Map映射、工具类（Iterator迭代器、Enumeration枚举类、Arrays和Collections），具体的可以看看这篇博文 [Java容器类](http://alexyyek.github.io/2015/04/06/Collection/)）
 * List,Set,Map的区别
 * List和Map的实现方式以及存储方式
-* HashMap的实现原理
+* HashMap的实现原理  
   ref:http://www.importnew.com/31278.html#comment-742217
 * HashMap数据结构？
 * HashMap源码理解
