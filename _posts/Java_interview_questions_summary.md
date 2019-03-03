@@ -167,17 +167,31 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     Ieterator是java.util包中迭代器类,而Ieterable是java.lang包中接口，好多对象都实现了Iterable接口，从而对象
     可以调用Iterator()方法;  
     ref:https://www.jianshu.com/p/b65ddde3acd8
+    
+#### 集合类/集合框架图
+
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g0pceuy5n3j31g90u0dhn.jpg)
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1g0pcexuvi2j31im0q00tw.jpg)
 
 #### 集合类以及集合框架
-    1,Set:HashSet的实现是利用HashMap来做的，LinkedHashSet是继承了HashSet底层用LinkedHashMap实现的,TreeSet底层使用树实现的；  
-    2,List:ArrayList底层是基于数组来实现的非线程安全，LinkedList底层是用链表来实现的非线程安全的,  
+    1,Set:HashSet的实现是利用HashMap来做的，LinkedHashSet是继承了HashSet底层用LinkedHashMap实现的,TreeSet底层使用二叉树树实现的，
+      底层基于TreeMap实现的；  
+    2,List:ArrayList底层是基于数组来实现的非线程安全擅长随机访问；LinkedList底层是用链表来实现的非线程安全的擅长插入和删除操作
+      ,Vector与ArrayList相似底层也是数据实现的，但是Vector是线程安全的；Stack继承Vector是一个后进先出的栈；    
     3,Map: HashMap:散列表是底层基于数组存储数据，使用数组+链表+红黑树(Hash碰撞)来实现,LinkedHashMap继承HashMap底层使用链表来存储数据的,
-      LinkedHashMap既可以按照它们插入的顺序排序，也可以按它们最后一次被访问的顺序排序。  
+      LinkedHashMap既可以按照它们插入的顺序排序，也可以按它们最后一次被访问的顺序排序；TreeMap有序散列表,基于红黑树来实现；
+      WeakHashMap弱引用键实现的Map,跟GC有关;  
+      1,强引用：普遍对象声明的引用，存在便不会GC  
+      2,软引用：有用但并非必须，发生内存溢出前，二次回收  
+      3,弱引用：只能生存到下次GC之前，无论是否内存足够    
+      4,虚引用：唯一目的是在这个对象被GC时能收到一个系统通知  
     ref:https://www.jianshu.com/p/63e76826e852  
-    code:https://github.com/xingxingt/centrecode/tree/master/src/main/java/collectionandmap
+        http://alexyyek.github.io/2015/04/06/Collection/   
+    code:https://github.com/xingxingt/centrecode/tree/master/src/main/java/collectionandmap  
 
 #### 容器类介绍以及之间的区别（容器类估计很多人没听这个词，Java容器主要可以划分为4个部分：List列表、Set集合、Map映射、工具类（Iterator迭代器、Enumeration枚举类、Arrays和Collections），具体的可以看看这篇博文 [Java容器类]）
     ref:http://alexyyek.github.io/2015/04/06/Collection/
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g0pd0tg95tj31hc0pwjuj.jpg)    
 
 * List,Set,Map的区别
 * List和Map的实现方式以及存储方式
