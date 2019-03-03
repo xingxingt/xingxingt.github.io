@@ -193,8 +193,15 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     ref:http://alexyyek.github.io/2015/04/06/Collection/
 ![](https://ws4.sinaimg.cn/large/006tKfTcgy1g0pd0tg95tj31hc0pwjuj.jpg)    
 
-* List,Set,Map的区别
-* List和Map的实现方式以及存储方式
+#### List,Set,Map的区别
+     Map:一个保存键值对的对象，映射的Map中不能有重复的key；
+     List:List存储的元素容器是个有序的可以索引到元素的容器，并且里面的元素可以重复；
+     Set:Set里面和List最大的区别是Set里面的元素对象不可重复。
+     
+#### List和Map的实现方式以及存储方式
+     List:
+     Map:
+
 * HashMap的实现原理  
   ref:http://www.importnew.com/31278.html#comment-742217
 * HashMap数据结构？
