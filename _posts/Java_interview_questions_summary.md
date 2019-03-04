@@ -208,9 +208,19 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     ref:http://www.importnew.com/31278.html#comment-742217  
         http://wiki.jikexueyuan.com/project/java-collection/hashmap.html
         
-* HashMap数据结构？
-* HashMap源码理解
-* HashMap如何put数据（从HashMap源码角度讲解）？
+#### HashMap源码理解
+    https://github.com/xingxingt/xingxingt.github.io/blob/master/_posts/2018-08-01-HashMap%E8%AF%A6%E8%A7%A3.md
+    
+#### HashMap如何put数据（从HashMap源码角度讲解）？
+    1，首先计算key的hashCode并计算数组的下标位置  
+    2，判断数组table是否为空，如果为空则进行初始化，调用resize()  
+    3，然后判断hashCode所对应的槽位是否有数据,如果没有数据就直接new一个新的Node存入table中;  
+    4,如果发生hash碰撞则先判断key的hash值是否相同，如果key的hash值相同那就再用equals判断两个key是否相同，
+      如果两个key相同，那就直接覆盖掉key对应的value值;  
+    5,然后继续判断是节点是否是树，如果是树则直接挂载到树节点上    
+    6,如果不是树节点，那就是是链表结构，将节点添加到链表的尾部，判断链表的长度是否是大于等于8，如果是则转为红黑树；  
+    7，put之后判断数据量是否超过threshold，如果超过则进行resize()  
+
 * HashMap怎么手写实现？
 * ConcurrentHashMap的实现原理
   https://www.jianshu.com/p/c0642afe03e0
