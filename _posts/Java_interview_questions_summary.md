@@ -195,20 +195,25 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 
 #### List,Set,Map的区别
      Map:一个保存键值对的对象，映射的Map中不能有重复的key；
-     List:List存储的元素容器是个有序的可以索引到元素的容器，并且里面的元素可以重复；
+     List:List存储的单个元素容器是个有序的可以索引到元素的容器，并且里面的元素可以重复；
      Set:Set里面和List最大的区别是Set里面的元素对象不可重复。
      
 #### List和Map的实现方式以及存储方式
-     List:
-     Map:
-
-* HashMap的实现原理  
-  ref:http://www.importnew.com/31278.html#comment-742217
+     List:List的实现由ArrayList,LinkedList；ArrayList的存储方式是数组，特点查询快;LinkedList存储方式是链表,  
+          特点是删除，插入快;           
+     Map: Map的实现由HashMap,LinkedHashMap,TreeMap,weekHashMap;HashMap的存储方式是散列表,特点快速查找键值；  
+          LinkedHashMap存储方式是链表；TreeMap的存储方式是对键按序存放;  
+         
+#### HashMap的实现原理  
+    ref:http://www.importnew.com/31278.html#comment-742217  
+        http://wiki.jikexueyuan.com/project/java-collection/hashmap.html
+        
 * HashMap数据结构？
 * HashMap源码理解
 * HashMap如何put数据（从HashMap源码角度讲解）？
 * HashMap怎么手写实现？
 * ConcurrentHashMap的实现原理
+  https://www.jianshu.com/p/c0642afe03e0
 * ArrayMap和HashMap的对比
 * HashTable实现原理
 * TreeMap具体实现
