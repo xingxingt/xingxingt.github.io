@@ -221,7 +221,10 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     6,如果不是树节点，那就是是链表结构，将节点添加到链表的尾部，判断链表的长度是否是大于等于8，如果是则转为红黑树；  
     7，put之后判断数据量是否超过threshold，如果超过则进行resize()  
 
-* HashMap怎么手写实现？
+#### HashMap怎么手写实现？
+    简易版:
+    ref:https://github.com/xingxingt/centrecode/blob/master/src/main/java/dataStructure/MapImplDemo.java
+    
 * ConcurrentHashMap的实现原理
   https://www.jianshu.com/p/c0642afe03e0
 * ArrayMap和HashMap的对比
@@ -253,7 +256,14 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 为什么要有线程，而不是仅仅用进程？
 * run()和start()方法区别
 * 如何控制某个方法允许并发访问线程的个数？
-* 在Java中wait和seelp方法的不同；
+### 在Java中wait,yield,sleep和join方法的不同；
+    这三个方法都可以用来暂停线程，但是sleep和yield是Thread类的方法，而wait是Object类的方法;  
+    关键区别是wait()方法是用于线程通信的，当一个线程调用wait方法后，这个线程会暂停执行并释放锁标志;而sleep是让线程短暂停止  
+    不会释放锁标志;   
+    而yield方法和wait(),sleep()的区别在于yield它仅仅让出cpu的执行权并进入就绪状态，让其他线程有机会运行;  
+    
+    ref:https://www.cnblogs.com/aspirant/p/8876670.html
+    
 * 谈谈wait/notify关键字的理解
 * 什么导致线程阻塞？
 * 线程如何关闭？
