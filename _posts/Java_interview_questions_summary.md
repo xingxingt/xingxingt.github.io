@@ -286,13 +286,24 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     2，影响某些数据的可见性；  
     编译器和cup能够重排序指令，保证最后相同的结果，提高性能，但是如果插入一条Memory Barrier会告诉编译器和cpu  
     不管什么指令都不能和这条Memory Barrier进行重排序;  
-    内存屏障还有一个重要的特点是可以强制刷出各种cpu的cache(主存)，比如读取屏障的操作，将会强制从cpu的cache总读取(主存);
+    内存屏障还有一个重要的特点是可以强制刷出cpu的各种cache(主存)，比如读取屏障的操作，将会强制从cpu的cache总读取(主存);
     volatile的实现就是基于内存屏障来实现的;
     
 #### volatile的原理
     volatile是通过加入内存屏障和禁止指令重排序优化来实现的；    
     volatile在写的操作，在写操作之后加入一个store屏障指令，将本地内存中的共享变量值刷新到主内存中;  
     volatile在读的操作，在读操作之前加一个load屏障指令，从主内存中读取共享变量;  
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g0sb3h62iij31180u077f.jpg)
+
+* happens-before
+
+#### 什么是CAS
+    CAS即compare and swap(比较和交换);  
+    CAS的思想: CAS会传入三个值，当前内存中的值V，旧的期望值A，即将要更新的值B,当且仅当期望值A和内存中的值V相同时，将内存值修改为B，
+    并返回true，否则什么都不做，返回false;  
+    CAS通过java的本地方法Unsafe来实现的，java方法无法操作底层内存中的数据，需要通过本地方法来访问,而Unsafe可以直接操作指定内存中数据;
+    CAS的缺点:有ABA的问题，可以通过AtomicStampedReference来解决;
+    ref:https://www.jianshu.com/p/fb6e91b013cc
     
 * 谈谈volatile关键字的用法
 * 谈谈volatile关键字的作用
