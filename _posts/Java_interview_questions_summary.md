@@ -280,6 +280,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 谈谈对Synchronized关键字，类锁，方法锁，重入锁的理解
 * static synchronized 方法的多线程访问和作用
 * 同一个类里面两个synchronized方法，两个线程同时访问的问题
+
 #### java的内存模型
     引入:
     原子性：是指cpu的一个操作，要么执行完，要么不执行，不可中途暂停然后再调度;    
@@ -294,6 +295,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     线程对变量的所有操作都必须在工作内存中进行，而不能直接读写主内存。不同的线程之间也无法直接访问对方工作内存中  
     的变量，线程间变量的传递均需要自己的工作内存和主存之间进行数据同步进行;)
     ref:https://www.hollischuang.com/archives/2550
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1g0szp0qn1vj30u40hsgn9.jpg)    
     
 
 #### java内存屏障
