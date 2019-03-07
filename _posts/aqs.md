@@ -1,6 +1,9 @@
 #AQS源码
 
-ref:https://juejin.im/entry/5ae02a7c6fb9a07ac76e7b70
+    当线程获取同步状态失败后(acquire()/acquireShared()),会加入到同步队列(addWaiter())的队尾，
+    并一直保持自旋(acquireQueued()), 在自旋的过程中会判断其前驱节点是否为首节点(head节点),如果为
+    首节点则不断尝试获取同步状态；获取同步状态成功则退出同步队列,当线程执行完逻辑后，会释放同步状态，释放后会唤醒其后继节点;  
+
 
 
 ```java
@@ -1748,3 +1751,5 @@ public abstract class AbstractQueuedSynchronizer
 }
     
 ```
+
+ref:https://juejin.im/entry/5ae02a7c6fb9a07ac76e7b70
