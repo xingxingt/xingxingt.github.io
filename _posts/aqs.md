@@ -1,4 +1,4 @@
-#AQS源码
+# AQS源码
 
     当线程获取同步状态失败后(acquire()/acquireShared()),会加入到同步队列(addWaiter())的队尾，
     并一直保持自旋(acquireQueued()), 在自旋的过程中会判断其前驱节点是否为首节点(head节点),如果为
