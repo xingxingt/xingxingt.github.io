@@ -237,12 +237,34 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 ![](https://ws4.sinaimg.cn/large/006tKfTcgy1g0wfah1argj31220kudjc.jpg)        
 
 #### HashTable实现原理
-    
+    HashTable又叫散列表,它继承Dictionary并实现了Map接口，它的键值都是对象，HashTable底层是用Entry[]数组+链表的结构来实现的，    
+    因为HashTable是一个同步容器，所以HashTable的方法基本上都用Synchronized修饰；    
+    put：先检查put的key是否为空，如果为空则返回空指针异常，否则计算key的hashcode，然后根据key的hashcode计算table的下标，如果  
+    table[index]有数据存在则进行遍历，如果遇到有相同个key则进行替换，如果不相同则直接添加；  
+    get:根据key的hashcode计算table的index下标，然后遍历链表，找到了返回，找不到则返回null;  
+
+
+#### HashMap和HashTable的区别
+     1,HashMap的key和value都允许为空,非线程安全效率要比HashTable高，不能包含重复的键，但能包含重复的值，  
+       HashMap是使用数组+链表+红黑树来实现的；  
+     2,HashTable的key和value不可以为空，是线程安全的，HashTable是使用数组+链表来实现的；  
+     3,HashMap的迭代器(Iterator)是fial-fast(快速失败);当其他线程改变了HashMap的结构(增加或者删除)，
+       则抛出ConcurrentModificationException,而HashTable是enumerator迭代器，不会出现这样的情况；
+       
+#### HashMap与HashSet的区别
+     1,HashSet实现了Set接口，它不允许有重复的值，存储的是单对象，HaseSetHashSet使用成员对象来计算hashcode值，  
+       对于两个对象来说hashcode可能相同，所以equals()方法用来判断对象的相等性，如果两个对象不同的话，那么返回false  
+     2,HashMap是实现了Map接口,存储的是key-value对，而且允许有空的key或者value，不允许有重复的key但是允许  
+       有重复的value,HashMap使用的是使用key来计算hashcode；其实HashSet底层是使用HashMap实现的，利用HashMap的  
+       key不允许重复的特性来实现的；
+       
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g0wub3q225j30ym0hsjsd.jpg)
+
+#### HashSet与HashMap怎么判断集合元素重复？
+     因为HashSet是基于HashMap来实现的，所以HashSet和HashMap都根据对象的hashCode和equals来判断的，如果对象和
+     集合中元素的hashcode和equals都相同，则说明是重复元素;
 
 * TreeMap具体实现
-* HashMap和HashTable的区别
-* HashMap与HashSet的区别
-* HashSet与HashMap怎么判断集合元素重复？
 * 集合Set实现Hash怎么防止碰撞
 * ArrayList和LinkedList的区别，以及应用场景
 * 数组和链表的区别
