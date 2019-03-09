@@ -225,10 +225,20 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     简易版:
     ref:https://github.com/xingxingt/centrecode/blob/master/src/main/java/dataStructure/MapImplDemo.java
     
-* ConcurrentHashMap的实现原理
-  https://www.jianshu.com/p/c0642afe03e0
+#### ConcurrentHashMap的实现原理 
+    ConcurrentHashMap和HashMap一样使用table存储Node，并用key的hashcode来确定table的index下标，处理hash碰撞时也是使用  
+    链表和红黑树来解决;  
+    在1.7之前ConcurrentHashMap使用的是segment锁分段的技术实现的高并发，而在1.8中ConcurrentHashMap是使用CAS+synchronized
+    的方法来解决并发问题；
+    
+    https://www.jianshu.com/p/c0642afe03e0
+    1.8ref:https://juejin.im/entry/59fc786d518825297f3fa968#comment
+    1.6ref:https://www.ibm.com/developerworks/cn/java/java-lo-concurrenthashmap/index.html  
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g0wfah1argj31220kudjc.jpg)        
 
 #### HashTable实现原理
+    
+
 * TreeMap具体实现
 * HashMap和HashTable的区别
 * HashMap与HashSet的区别
@@ -313,7 +323,10 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     volatile在读的操作，在读操作之前加一个load屏障指令，从主内存中读取共享变量;  
 ![](https://ws3.sinaimg.cn/large/006tKfTcgy1g0sb3h62iij31180u077f.jpg)
 
-* happens-before
+#### happens-before
+    如果线程A满足线程B的happens-before原则，那么线程A的执行动作的结果对线程B是可见的，如果两个线程未按照happens-before原则  
+    ，则JVM会对他们的执行顺序重新排序;
+
 
 #### 什么是CAS
     CAS即compare and swap(比较和交换);  
