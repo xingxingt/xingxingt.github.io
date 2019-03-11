@@ -333,15 +333,26 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
      ref code:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/aqs
 
 #### 在Java中wait,yield,sleep和join方法的不同；
-    这三个方法都可以用来暂停线程，但是sleep和yield是Thread类的方法，而wait是Object类的方法;  
-    关键区别是wait()方法是用于线程通信的，当一个线程调用wait方法后，这个线程会暂停执行并释放锁标志;而sleep是让线程短暂停止  
-    不会释放锁标志;   
-    而yield方法和wait(),sleep()的区别在于yield它仅仅让出cpu的执行权并进入就绪状态，让其他线程有机会运行;  
-    
-    ref:https://www.cnblogs.com/aspirant/p/8876670.html
+    sleep:需要指定等待的时间,sleep方法可以让当前正在执行的线程暂停执行，进入阻塞状态，该方法可以让与该线程同优先级或者高优先级的线程  
+          得到执行机会，也可以让低优先级的线程得到执行机会;但是sleep不会释放锁标志，如果多个线程同时访问synchronized同步代码块，那么  
+          其他线程仍然无法访问共享数据;
+    wait:wait()方法和notify(),notifyall()方法一起使用，这三个方法协调多线程对共享数据的存取，所以这三个方法要在synchronized代码块中使用,    
+         也就是说调用wait()方法和notify(),notifyall()之前，线程必须获取锁,这三个方法是Object内的方法，不是Thread中的方法;    
+         wait()和sleep()的区别在于该方法释放对象的锁标志,当某个对象调用wait方法后会暂停当前线程的执行，并将当前线程放入对象等待池中，  
+         直到调用notify()方法后才将对象等待池中任意一个线程移出并放入锁标志等待池中，锁标志等待池中的线程随时准备竞争锁的拥有权，当对象  
+         调用notifyAll()方法时，会将对象等待池中的所有对象都移入锁标志等待池中； 
+         wait()，notify()及notifyAll()只能在synchronized语句中使用;      
+    yield: yield和sleep相似,暂停线程之后不会释放锁标志，yield只会让当前线程重新回到可执行的状态，所以通过yield()方法，线程回到可执行状态后  
+           又有可能进入可执行的状态后马上执行，所以说yield()是不可靠的；另外yeild()只能使同优先级或者高优先级的线程得到执行机会;  
+    join: 会使当前线程等待调用join()方法的线程执行完毕后在执行,插队;  
+       
+    ref:https://blog.csdn.net/xiangwanpeng/article/details/54972952
         https://www.jianshu.com/p/25e959037eed
     
-* 谈谈wait/notify关键字的理解
+#### 谈谈wait/notify关键字的理解
+    可以通过配合调用Object对象的wait（）方法和notify（）方法或notifyAll（）方法来实现线程间的通信;   
+    具体看上题; 
+    
 * 什么导致线程阻塞？
 * 线程如何关闭？
 * 讲一下java中的同步的方法
