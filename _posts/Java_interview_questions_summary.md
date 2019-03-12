@@ -373,9 +373,28 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
      ref:https://www.jianshu.com/p/536b0df1fd55  
      code:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/thread
         
-* 讲一下java中的同步的方法
+#### 讲一下java中的同步的方法
+     为什么要同步?    
+     java允许多个线程并发控制，当多个线程对一个共享变量修改时会使共享资源变量不准确，所以通过同步锁的方法，使一个线程对共享变量进行操作的时候  
+     禁止其他线程操作，从而保证了该变量的唯一性和准确性；  
+     同步方法：  
+     1，使用synchronized关键字修饰的方法；  
+     2,使用synchronized关键字修饰代码块；  
+     3,使用volatile修饰的变量实现线程同步，但是volatile修饰的变量不具备原子性和线程安全性;  
+     4,使用锁机制来实现线程同步，例如：ReentrantLock  
+     5,使用局部变量ThreadLocal实现线程同步；   
+     6,使用阻塞队列实现线程同步LinkedBlockingQueue;  
+     7,使用原子变量实现线程同步,util.concurrent.atomic包下的原子变量;  
+     ref:https://www.cnblogs.com/XHJT/p/3897440.html
+    
 * 数据一致性如何保证？
-* 如何保证线程安全？
+
+#### 如何保证线程安全？
+    1，互斥同步： 同步表示共享变量在被多个线程访问时，保证共享变量只被一个线程使用，互斥是方法，同步是目标，例如synchronized等锁机制；  
+    2,非阻塞同步，非阻塞同步是先进行操作，如果没有其他线程争用共享数据，那操作就成功；如果数据有争用，产生了冲突，那就采取其他的补偿措施。  
+    3，无同步方案；  对于一个方法本来就不涉及共享数据，那就自然无须同步措施来保证正确性。  
+    ref:https://www.jianshu.com/p/fe7ed5b50933
+
 * 如何实现线程同步？
 * 两个进程同时要求写或者读，能不能实现？如何防止进程的同步？
 * 线程间操作List
