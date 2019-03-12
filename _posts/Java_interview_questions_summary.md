@@ -354,8 +354,25 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     可以通过配合调用Object对象的wait（）方法和notify（）方法或notifyAll（）方法来实现线程间的通信;   
     具体看上题; 
     
-* 什么导致线程阻塞？
-* 线程如何关闭？
+#### 什么导致线程阻塞？
+     线程阻塞的特点: 线程阻塞后该线程会让出cpu的使用权，暂停运行，只能等待阻塞的原因消除恢复正常执行，或者是该线程被中断，  
+                   抛出InterruptedException异常，该线程也会退出阻塞状态;  
+     导致线程阻塞的原因:   
+                   1,该线程执行了Thread.sleep(time)方法,使该线程进入休眠并放弃cpu的使用权，等休眠时间到了再恢复cpu的使用权;  
+                   2,线程执行同步代码块，未获取到相关同步锁，从而使该线程处于等待阻塞状态，等到获取到同步锁后，再恢复执行；  
+                   3,线程执行了一个对象的wait()方法，使该线程处于阻塞状态，等到其他线程执行了notify()后者notifyAll()方法后才能恢复执行;  
+                   4,线程执行一些IO操作，因为等待某些资源而进入等待阻塞状态，例如等待客户端的输入...  
+      ref:https://blog.csdn.net/sinat_22013331/article/details/45740641
+      
+#### 线程如何关闭？
+     1，使用标志位,例如定义一个用volatile修饰的状态为(为了保证线程之间的可见性)，然后在线程启动后定期检查这个状态位，如果这个状态位为True了，则  
+        马上结束线程；这个方法的弊端就是如果线程处于阻塞状态，那么这个线程无法进行状态位的检查，从而无法停止线程;  
+     2,使用java提供的中断机制,interupte(),isInterrupted(),interrupted();对线程调用interrupt()方法，不会真正中断正在运行的线程，  
+       只是发出一个请求，由线程在合适时候结束自己。     
+     3,使用Executor框架,ExecutorService扩展了Executor，ExecutorService.submit()之后返回一个future，可以使用future.cancle()来中断线程; 
+     ref:https://www.jianshu.com/p/536b0df1fd55  
+     code:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/thread
+        
 * 讲一下java中的同步的方法
 * 数据一致性如何保证？
 * 如何保证线程安全？
