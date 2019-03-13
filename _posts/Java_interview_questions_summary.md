@@ -2,6 +2,7 @@
 # Java Interview Questions Summary
 ref:https://juejin.im/entry/578d938079bc44005ff26aec  
     https://www.jianshu.com/p/511fa4fbf3d5
+    https://juejin.im/post/5c788d986fb9a049f154e479
 
 ### 一、java基础知识点
 
@@ -387,7 +388,13 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
      7,使用原子变量实现线程同步,util.concurrent.atomic包下的原子变量;  
      ref:https://www.cnblogs.com/XHJT/p/3897440.html
     
-* 数据一致性如何保证？
+#### 数据一致性如何保证？
+     1，CAS；  
+     2，Final修饰不可变;  
+     3,synchronized，修改代码块或者方法，通过线程互斥的方式实现;  
+     4,volatile修饰,但是不能保证原子性;
+     5,concurrent,lock,atomic包下的工具类来实现；
+     ref:https://www.cnblogs.com/jiumao/p/7136631.html
 
 #### 如何保证线程安全？
     1，互斥同步： 同步表示共享变量在被多个线程访问时，保证共享变量只被一个线程使用，互斥是方法，同步是目标，例如synchronized等锁机制；  
@@ -395,9 +402,28 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     3，无同步方案；  对于一个方法本来就不涉及共享数据，那就自然无须同步措施来保证正确性。  
     ref:https://www.jianshu.com/p/fe7ed5b50933
 
-* 如何实现线程同步？
-* 两个进程同时要求写或者读，能不能实现？如何防止进程的同步？
-* 线程间操作List
+#### 如何实现线程同步？
+    1,互斥同步：同步是保证在多线程环境下并发的访问同一个共享变量时，同一时刻只有一个线程能够操作共享变量;  互斥是方法，同步是目的;  
+      例如使用:synchronized关键字...   
+    2,非阻塞同步： 互斥的话会带来线程间的阻塞和唤醒从而影响性能，非阻塞同步是真先进性操作共享数据，如果没有其他线程竞争共享资源，那就操作  
+      成功，如果有线程竞争共享资源，产生了冲突，那么久采用其他的补救措施；  
+    3，无同步方案：对于一段代码不涉及到共享资源，那么也就无需采用同步措施来保证正确性;     
+    4,使用重入锁实现线程同步（ReenreantLock）；  
+    5,使用局部变量实现线程同步 使用ThreadLocal管理变量;  
+    6,使用特殊域变量(volatile)实现线程同步,但它是非原子性的；  
+    7,使用阻塞队列实现线程同步,LinkedBlockingQueue;    
+    8,使用原子变量实现线程同步util.concurrent.atomic包下的;  
+    ref:https://www.cnblogs.com/XHJT/p/3897440.html
+
+#### 两个进程同时要求写或者读，能不能实现？如何防止进程的同步？
+    1,允许多个线程同时对文件进行读操作;  
+    2,只允许一个写线程往文件中写操作;  
+    3,任一写者在完成写操作之前不允许其他读者或写者工作;  
+    4,写者执行写操作前，应让已有的读者和写者全部退出。   
+
+#### 线程间操作List 
+    ref:https://blog.csdn.net/xiao__gui/article/details/51050793  
+
 * Java中对象的生命周期
 * Synchronized用法
 * synchronize的原理
@@ -441,7 +467,6 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     如果线程A满足线程B的happens-before原则，那么线程A的执行动作的结果对线程B是可见的，如果两个线程未按照happens-before原则  
     ，则JVM会对他们的执行顺序重新排序;
 
-
 #### 什么是CAS
     CAS即compare and swap(比较和交换);  
     CAS的思想: CAS会传入三个值，当前内存中的值V，旧的期望值A，即将要更新的值B,当且仅当期望值A和内存中的值V相同时，将内存值修改为B，
@@ -450,8 +475,17 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     CAS的缺点:有ABA的问题，可以通过AtomicStampedReference来解决;
     ref:https://www.jianshu.com/p/fb6e91b013cc
     
-* 谈谈volatile关键字的用法
-* 谈谈volatile关键字的作用
+#### 谈谈volatile关键字的用法
+    volatile保证了不同线程对该变量操作的可见性;   
+    禁止指令重排序;    
+    所以volatile关键字只是保证了JMM中的可见性，有序性，并不能保证原子性；  
+    ref:https://blog.csdn.net/hang1995/article/details/79417477
+   
+#### 谈谈volatile关键字的作用
+    被volatile修饰的变量，在每次读取的时候都是读取主存中的变量值，例如多线程环境下，如果每个线程都会copy一份共享变量到线程栈中，如果  
+    这个共享变量被volatile修饰，那么线程每次都会从主存中读取变量值，每次修改过后都会将修改后的变量值写回主存中去;  
+    ref:https://www.cnblogs.com/aigongsi/archive/2012/04/01/2429166.html
+
 * 谈谈NIO的理解
 * synchronized 和volatile 关键字的区别
 * synchronized与Lock的区别
