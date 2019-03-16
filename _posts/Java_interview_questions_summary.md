@@ -422,9 +422,27 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     4,写者执行写操作前，应让已有的读者和写者全部退出。   
 
 #### 线程间操作List 
-    ref:https://blog.csdn.net/xiao__gui/article/details/51050793  
+    多线层操作list会出现如下情况:  
+    如果一个线程正在遍历list，而恰好另一个线程对该list做了remove操作，那么此时遍历list过程会出现ConcurrentModificationException；    
+    解决办法:   
+    1,使用vector，并在遍历该list的时候使用synchronized(list)来加锁，使在遍历list的时候不让remove操作执行；  
+    2,使用CopyOnWriteArrayList,copyOnWrite也就是在写时进行copy，当对CopyOnWriteArrayList进行修改操作时，它首先会copy一份新的list  
+      并在新的list上做修改，最后将原list的引用指向新的list；所以如果一个线程在遍历list的时候，另一个线程对该list做修改操作，其实是在新的list  
+      上做的修改操作，并不会应该list的遍历操作;  
+    3,使用线程安全的list.forEach，java8的新特性，例如vector的forEach方法，是在该forEach上加了synchronized关键字来控制线程安全的遍历;  
+    ref:https://blog.csdn.net/xiao__gui/article/details/51050793 
 
-* Java中对象的生命周期
+#### https://blog.csdn.net/sodino/article/details/38387049
+    1,创建阶段，一旦某个对象被创建后，并分配给某个变量赋值，则这个对象就进入引用阶段；  
+    2,应用阶段，对象至少被一个强引用持有着;  
+    3,不可见阶段,程序本身不对该对象持有任何强引用，虽然该对象的这些引用还存在着，即程序的执行已经超出了该对象的作用域(这种情况编辑器就能检查的出来);  
+    4,不可达阶段，指该对象不会被任何强引用所持有;  
+    5,收集阶段,当对象已经进入了不可达阶段，并且垃圾收集器已经为该对象重新分配的内存空间，则该对象进入收集阶段，此阶段可以通过finalize()逃逸,
+      从新获得引用;
+    6,回收阶段,当对象仍然处于不可达阶段，并且已经执行了finalized()方法，则该对象进入回收阶段;  
+    7,对象空间重新分配,垃圾收集器对该对象的内存空间进行回收或者重新分配，该对象彻底消失; 
+    ref:https://blog.csdn.net/sodino/article/details/38387049
+
 * Synchronized用法
 * synchronize的原理
 * 谈谈对Synchronized关键字，类锁，方法锁，重入锁的理解
