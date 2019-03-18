@@ -1,14 +1,18 @@
 
 # Java Interview Questions Summary
-[数据结构](#数据结构)
+
+[一、java基础知识点](#java基础知识点)
+[二、java深入源码级的面试题（有难度）](#java深入源码级的面试题（有难度）)
+[三、数据结构](#数据结构)
+[四、线程、多线程和线程池](#四、线程、多线程和线程池)
+[五、JVM](#JVM)
+[六、数据库](#数据库)
+[七、多线程二](#多线程二)
+[末尾](#End)
+[ref](#ref)
 
 
-
-ref:https://juejin.im/entry/578d938079bc44005ff26aec  
-    https://www.jianshu.com/p/511fa4fbf3d5
-    https://juejin.im/post/5c788d986fb9a049f154e479
-
-### 一、java基础知识点
+### java基础知识点
 
 #### java中==和equals和hashCode的区别:
     
@@ -87,7 +91,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * string 转换成 integer的方式及原理
 
 
-### 二、java深入源码级的面试题（有难度）
+### java深入源码级的面试题（有难度）
 
 #### 哪些情况下的对象会被垃圾回收机制处理掉？
     GC判断对象是否能被回收的方法:  
@@ -152,8 +156,8 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * String为什么要设计成不可变的？
 * Object类的equal和hashCode方法重写，为什么？
 
+
 ### 数据结构
-### 三、数据结构
 
 #### 常用数据结构简介
     Collection:  
@@ -287,7 +291,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 合并多个单有序链表（假设都是递增的）
 
 
-### 四、线程、多线程和线程池
+### 线程、多线程和线程池
 
 #### 开启线程的三种方式？
     继承Thread: 定义一个继承Thead类的子类，子类重写Thread的run方法，然后实例化子类创建出线程对象，然后调用线程对象的start()开启线程;    
@@ -670,6 +674,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 说一下 jvm 调优的工具？
 * 常用的 jvm 调优的参数都有哪些？
 
+
 ### 数据库
 * 数据库的三范式是什么？
 * 一张自增表里面总共有 7 条数据，删除了最后 2 条数据，重启 mysql 数据库，又插入了一条数据，此时 id 是几？
@@ -686,7 +691,6 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 说一下乐观锁和悲观锁？
 * mysql 问题排查都有哪些手段？
 * 如何做 mysql 的性能优化
-
 
 
 ### 多线程二
@@ -744,7 +748,6 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 线程池在什么情况下需要丢弃处理？
 * 线程池任务拒绝策略有哪些？
 * 创建线程池常用的堵塞队列有哪些？
-
 * Future的主要功能是什么？
 * FutureTask的结构关系？FutureTask如何使用呢？
 
@@ -762,10 +765,6 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * tomcat了解吗,说下类加载结构
 * 关于spring,spring 如何让A和B两个Bean按顺序加载
 * 10亿数据去重
-
-## 二
-
-
 
 
 ----
@@ -797,41 +796,13 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * [深入分析ConcurrentHashMap](http://www.infoq.com/cn/articles/ConcurrentHashMap#)
 
 
-### JVM
-* 说一下 jvm 的主要组成部分？及其作用？
-* 说一下 jvm 运行时数据区？
-* 说一下堆栈的区别？
-* 队列和栈是什么？有什么区别？
-* 什么是双亲委派模型？
-* 说一下类加载的执行过程？
-* 怎么判断对象是否可以被回收？
-* java 中都有哪些引用类型？
-* 说一下 jvm 有哪些垃圾回收算法？
-* 说一下 jvm 有哪些垃圾回收器？
-* 详细介绍一下 CMS 垃圾回收器？
-* 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
-* 简述分代垃圾回收器是怎么工作的？
-* 说一下 jvm 调优的工具？
-* 常用的 jvm 调优的参数都有哪些？
-
-### 数据库
-* 数据库的三范式是什么？
-* 一张自增表里面总共有 7 条数据，删除了最后 2 条数据，重启 mysql 数据库，又插入了一条数据，此时 id 是几？
-* 如何获取当前数据库版本？
-* 说一下 ACID 是什么？
-* char 和 varchar 的区别是什么？
-* float 和 double 的区别是什么？
-* mysql 的内连接、左连接、右连接有什么区别？
-* mysql 索引是怎么实现的？
-* 怎么验证 mysql 的索引是否满足需求？
-* 说一下数据库的事务隔离？
-* 说一下 mysql 常用的引擎？
-* 说一下 mysql 的行锁和表锁？
-* 说一下乐观锁和悲观锁？
-* mysql 问题排查都有哪些手段？
-* 如何做 mysql 的性能优化
 
 
 
+### ref
+ref:https://juejin.im/entry/578d938079bc44005ff26aec  
+    https://www.jianshu.com/p/511fa4fbf3d5
+    https://juejin.im/post/5c788d986fb9a049f154e479
 
 https://zhuanlan.zhihu.com/p/23713529
+### End
