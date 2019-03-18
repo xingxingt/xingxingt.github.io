@@ -91,7 +91,7 @@
 * string 转换成 integer的方式及原理
 
 
-### java深入源码级的面试题（有难度）
+### java深入源码级的面试题
 
 #### 哪些情况下的对象会被垃圾回收机制处理掉？
     GC判断对象是否能被回收的方法:  
@@ -806,3 +806,5 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 
 https://zhuanlan.zhihu.com/p/23713529
 ### End
+
+[跳转至文章头部](#Java Interview Questions Summary)
