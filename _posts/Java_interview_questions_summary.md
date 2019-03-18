@@ -531,13 +531,31 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
          https://www.jianshu.com/p/19f861ab749e  
 
 #### 谈谈对Synchronized关键字，类锁，方法锁，重入锁的理解
+    重入锁：  
+    Synchronized是强制原子性的内置锁机制，当一个线程获取该对象锁之后再次获取该锁的时候可以再次得到该锁，不需要去竞争锁；也就是说一个synchronied  
+    方法/块在调用被类内部的其他Synchronized方法时是永远可以拿到锁;  
+    重入锁的实现原理:   
+    在线程栈中有一个数据结构(monitor)用于存储锁的持有者(owner)以及锁的重入次数(Nest),当一个线程已经获取到了该锁那么Nest则被置为1,当该线程  
+    再次想要获取该锁的时候，会判断该锁的持有者是否是该线程，如果是则将Nest+1，进入同步代码块；当线程退出同步代码块时，计数器会递减，如果计数器为0，
+    则释放该锁； 
+    重入锁ref:https://blog.csdn.net/aigoogle/article/details/29893667?utm_source=tuicool&utm_medium=referral  
+             https://www.jianshu.com/p/19f861ab749e  
+    
     refCode:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent
             /sync/SynchronizedMethodAndCodes.java  
-    ref:https://blog.csdn.net/le_le_name/article/details/52348314  
+    ref:https://blog.csdn.net/le_le_name/article/details/52348314    
 
-
-* static synchronized 方法的多线程访问和作用
-* 同一个类里面两个synchronized方法，两个线程同时访问的问题
+#### static synchronized 方法的多线程访问和作用
+    synchronizd是对类的当前实例进行加锁，而static synchronized是对类的所有实例进行加锁；
+    看代码例子:  
+     refCode:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent
+            /sync/SynchronizedMethodAndCodes.java  
+     ref:https://blog.csdn.net/wangtaomtk/article/details/52318634  
+        
+#### 同一个类里面两个synchronized方法，两个线程同时访问的问题
+     ref:https://blog.csdn.net/aiyawalie/article/details/53261823
+     refCode:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent
+            /sync/SynchronizedMethodAndCodes.java  
 
 #### java的内存模型
     引入:
@@ -594,9 +612,26 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
     这个共享变量被volatile修饰，那么线程每次都会从主存中读取变量值，每次修改过后都会将修改后的变量值写回主存中去;  
     ref:https://www.cnblogs.com/aigongsi/archive/2012/04/01/2429166.html
 
-* 谈谈NIO的理解
-* synchronized 和volatile 关键字的区别
-* synchronized与Lock的区别
+
+#### synchronized 和volatile 关键字的区别
+    synchronized主要作用于执行控制，该线程获取了锁其他线程也要获取该锁的话就会被阻塞，这样就保护了被synchronized修饰的代码块不被其他线程访问，  
+    同时Synchronized会建立一个内存屏障，内存屏障指令保证了cpu的所有操作结果都会刷新到主存中，这样就保证了共享资源的可见性；   
+    volatile主要的作用是内存的可见行，它保证了通过volatile修饰的变量读写都会刷新到主存中；  
+    区别:  
+    1,被volatile修饰的变量会告诉jvm该值存在于线程的工作内存中是不可靠的，需要从主存中读取，而Synchronized主要是锁住当前变量，只有当前线程  
+      可以访问，其他线程被阻塞；  
+    2,volatile只能修饰变量，而Synchronized可以修饰变量，方法，类；  
+    3,volatile修饰的变量只能保证多线程的可见性，而Synchronized修饰的可以保证多线程的可见性和原子性；  
+    4,volatile不会造成线程阻塞，而Synchronized会造成线程阻塞;   
+    5,volatile修饰的变量不会被编译器优化(禁止指令重排序)，而Synchronized会被编译器优化；  
+    ref:https://blog.csdn.net/suifeng3051/article/details/52611233
+
+#### synchronized与Lock的区别
+    ref:http://www.cnblogs.com/dolphin0520/p/3923167.html
+        https://blog.csdn.net/u012403290/article/details/64910926?locationNum=11&fps=1
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g17b75r93vj31hk0l875j.jpg)
+
+
 * ReentrantLock 、synchronized和volatile比较
 * ReentrantLock的内部实现
 * lock原理
@@ -612,6 +647,42 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * 如何保证多线程读写文件的安全？
 * 多线程断点续传原理
 * 断点续传的实现
+* 谈谈NIO的理解
+
+### JVM
+* 说一下 jvm 的主要组成部分？及其作用？
+* 说一下 jvm 运行时数据区？
+* 说一下堆栈的区别？
+* 队列和栈是什么？有什么区别？
+* 什么是双亲委派模型？
+* 说一下类加载的执行过程？
+* 怎么判断对象是否可以被回收？
+* java 中都有哪些引用类型？
+* 说一下 jvm 有哪些垃圾回收算法？
+* 说一下 jvm 有哪些垃圾回收器？
+* 详细介绍一下 CMS 垃圾回收器？
+* 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
+* 简述分代垃圾回收器是怎么工作的？
+* 说一下 jvm 调优的工具？
+* 常用的 jvm 调优的参数都有哪些？
+
+### 数据库
+* 数据库的三范式是什么？
+* 一张自增表里面总共有 7 条数据，删除了最后 2 条数据，重启 mysql 数据库，又插入了一条数据，此时 id 是几？
+* 如何获取当前数据库版本？
+* 说一下 ACID 是什么？
+* char 和 varchar 的区别是什么？
+* float 和 double 的区别是什么？
+* mysql 的内连接、左连接、右连接有什么区别？
+* mysql 索引是怎么实现的？
+* 怎么验证 mysql 的索引是否满足需求？
+* 说一下数据库的事务隔离？
+* 说一下 mysql 常用的引擎？
+* 说一下 mysql 的行锁和表锁？
+* 说一下乐观锁和悲观锁？
+* mysql 问题排查都有哪些手段？
+* 如何做 mysql 的性能优化
+
 
 
 ### 多线程二
