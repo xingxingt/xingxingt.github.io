@@ -1,6 +1,6 @@
 
 # Java Interview Questions Summary
-[数据结构](三、数据结构)
+[数据结构](数据结构)
 
 
 
@@ -152,7 +152,7 @@ ref:https://juejin.im/entry/578d938079bc44005ff26aec
 * String为什么要设计成不可变的？
 * Object类的equal和hashCode方法重写，为什么？
 
-
+### 数据结构
 ### 三、数据结构
 
 #### 常用数据结构简介
