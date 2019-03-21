@@ -640,10 +640,37 @@
 ![](https://ws4.sinaimg.cn/large/006tKfTcgy1g17b75r93vj31hk0l875j.jpg)
 
 
-* ReentrantLock 、synchronized和volatile比较
-* ReentrantLock的内部实现
-* lock原理
-* 死锁的四个必要条件？
+#### ReentrantLock 、synchronized和volatile比较
+     synchronized:是内置锁，锁的管理交给底层的JVM，又称为互斥锁，即操作互斥;  
+     ReentrantLock:可重入锁,需要自己去管理锁，特点如下：  
+             1,ReentrantLock有tryLock()方法，允许尝试获取锁，如果获取到锁则返回true，否则返回false；  
+             2,ReentrantLock有公平锁和非公平锁功能，在创建的时候可以指定，默认是非公平锁,可抢占;    
+             3,ReentrantReadWriteLock,可实现读写分离锁,可用于读多写少的情景，读的时候不加锁，写的时候加锁从而大大提高性能；  
+     volatile:修饰于变量,主要是内存可见性和禁止指令重排序，但是非线程安全的，也不是原子性的；         
+     ref:https://www.cnblogs.com/dennyzhangdd/p/6020566.html  
+     
+#### ReentrantLock的内部实现
+    ReentrantLock是可重入锁，实现主要有两种，公平锁和非公平锁，公平锁就是多个线程竞争锁的时候，每个线程按照抢占锁的顺序依次获取锁，  
+    而非公平锁如果线程A获取了锁，线程B处于锁等待被挂起状态，当A执行完代码释放锁后，B开始尝试获取锁，在B尝试获取锁的时候C线程也来尝试  
+    获取锁并且获取锁成功，那B线程则继续处于等待状态，这就是非公平锁的抢占机制;   
+    ReentrantLock内部有一个计数器state，当线程A获取了锁，那么state的值原子性的+1,而在线程A获取锁的时候，线程A又尝试获取锁，此时  
+    线程A无需排队等待，只需将计数器state的值原子性的+1即可,然后访问同步代码块(+1操作是用CAS来完成的);  
+    另外还有条件变量Condition:条件变量很大一个程度上是为了解决Object.wait/notify/notifyAll难以使用的问题. 在Synchronized中  
+    所有线程都在一个object条件队列中等待，而ReentrantLock一个lock可以有多个condition条件队列;   
+    ref:https://blog.csdn.net/yanyan19880509/article/details/52345422   
+        https://www.jianshu.com/p/4358b1466ec9  
+
+#### lock原理
+    底层AQS分析  
+    https://blog.csdn.net/endlu/article/details/51249156  
+    https://www.jianshu.com/p/d8eeb31bee5c  
+
+#### 死锁的四个必要条件:  
+    互斥条件：一个资源每次只能被一个进程使用。  
+    请求与保持条件：一个进程因请求资源而阻塞时，对已获得的资源保持不放。  
+    不剥夺条件:进程已获得的资源，在末使用完之前，不能强行剥夺。   
+    循环等待条件:若干进程之间形成一种头尾相接的循环等待资源关系。  
+        
 * 怎么避免死锁？
 * 对象锁和类锁是否会互相影响？
 * 什么是线程池，如何使用?
