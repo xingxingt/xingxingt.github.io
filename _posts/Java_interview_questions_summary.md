@@ -694,8 +694,8 @@
         1,线程的创建和销毁都伴随着系统的开销，过于频繁的创建和销毁线程会造成严重的影响执行效率；  
         2,可运用线程池来控制线程的并发数，从而可以避免线程任务过多而系统资源不足导致任务阻塞的情况;  
         3,对线程的管理,比如对线程定时循环执行或者延迟执行；  
-    https://www.jianshu.com/p/210eab345423  
-
+    ref:https://www.jianshu.com/p/210eab345423  
+    ref:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/threadpool
 
 * 线程池的拒绝策略     
 * Java的并发、多线程、线程模型
