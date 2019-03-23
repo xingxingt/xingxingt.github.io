@@ -697,8 +697,21 @@
     ref:https://www.jianshu.com/p/210eab345423  
     ref:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/threadpool
 
-* 线程池的拒绝策略     
-* Java的并发、多线程、线程模型
+#### 线程池的拒绝策略  
+    java线程池的拒绝策略的实现:  
+    1,ThreadPoolExecutor.AbortPolicy:丢弃任务并抛出RejectedExecutionException异常。  
+    2,ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常。  
+    3,ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务，然后重新尝试执行任务（重复此过程）  
+    4,ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务  
+    ref:ref:https://github.com/xingxingt/concurrent/tree/master/src/main/java/com/concurrent/concurrent/
+    threadpool/ThreadPoolRejectedDemo.java
+
+#### java的BlockQueue
+    ref:http://www.importnew.com/28053.html
+
+#### Java的并发、多线程、线程模型
+    ref:http://ifeve.com/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B/
+    
 * 谈谈对多线程的理解
 * 多线程有什么要注意的问题？
 * 谈谈你对并发编程的理解并举例说明
