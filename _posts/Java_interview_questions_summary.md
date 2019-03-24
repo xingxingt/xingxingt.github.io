@@ -762,7 +762,25 @@
     队列：是一种先进者先出的数据结构,入队列enqueue()将一个数据插入尾部,出队列dequeue()在头部取数据；  
     
 #### 什么是双亲委派模型？
-* 说一下类加载的执行过程？
+    类加载器: 根据类的全限定名称来将class文件加载到JVM虚拟机中;  
+    双亲委派模型： 
+    某个类加载器再收到加载类的请求时，它首先不会去尝试加载类，而是将将加载任务委托给父类加载器，依次类推，如果在父类加载器中可以完成加载任务，  
+    则返回成功，如果父类加载器在搜索范围内找不到该类，即ClassNotFoundException，子加载器才去尝试加载任务;    
+   
+    如何实现一个双亲委派模型:  
+    继承ClassLoader，ClassLoader中有三个方法：  
+    1,loadClass()该方法是ClassLoader类默认实现的，在该方法中首先会判断指定的类是否已经被加载，如果被加载了就无需在此加载；如果还没有加载 
+      则先判断是否有父类加载器，如果有则使用父类加载器parent.loadClass(name, false)或者使用findBootstrapClassOrNull(name);  
+    2，findClass(),如果第一步中的父类加载器和bootstrap加载器都没有加载到该类，则使用当前类加载的findClass()来完成类加载;    
+    3,defineClass(),如果第二步中读取一个指定的名称的类为字节数组的话，可以使用defineClass()该方法将字节数组转为Class对象；    
+    ref:https://blog.csdn.net/huachao1001/article/details/52297075  
+        https://blog.csdn.net/tang9140/article/details/42738433 
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1dmghb1z6j31gi0qugme.jpg)   
+
+
+#### 说一下类加载的执行过程？
+    类加载过程:  
+
 * 怎么判断对象是否可以被回收？
 * java 中都有哪些引用类型？
 * 说一下 jvm 有哪些垃圾回收算法？
@@ -771,8 +789,11 @@
 * 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
 * 简述分代垃圾回收器是怎么工作的？
 * 说一下 jvm 调优的工具？
-* 常用的 jvm 调优的参数都有哪些？
+#### 常用的 jvm 调优的参数都有哪些？
+https://mp.weixin.qq.com/s/tfyHwbsNCTjvMGTrfQ0qwQ
+
 https://juejin.im/post/5c875fb96fb9a049a82029b4
+
 
 
 ### 数据库
