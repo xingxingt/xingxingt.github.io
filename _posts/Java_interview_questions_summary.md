@@ -276,6 +276,8 @@
      集合中元素的hashcode和equals都相同，则说明是重复元素;
 
 * TreeMap具体实现
+ref:https://juejin.im/entry/57bfab077db2a20068ebf9d2
+
 * 集合Set实现Hash怎么防止碰撞
 * ArrayList和LinkedList的区别，以及应用场景
 * 数组和链表的区别
