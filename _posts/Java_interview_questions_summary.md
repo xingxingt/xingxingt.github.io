@@ -809,17 +809,43 @@
             足够的内存时，才会抛出内存溢出异常;  
     3,弱引用:用来描述一些非必须的对象，它比软引用更弱一些，对于弱引用的对象只能生存到下一次GC之前，当垃圾收集器工作的时候，不管内存是否足够都会  
             对弱引用的对象进行回收；  
-    4,虚引用:最弱的一种引用，  
+    4,虚引用:最弱的一种引用，虚引用的最大作用在于跟踪对象回收，清理被销毁对象的相关资源。  
+    ref:http://www.importnew.com/20468.html
 
-* 说一下 jvm 有哪些垃圾回收算法？
-* 说一下 jvm 有哪些垃圾回收器？
+#### 说一下jvm 有哪些垃圾回收算法？
+    标记-清除算法： 该算法分为两部分，第一部分是标记，标记出所有需要回收的对象，标记完成后统一回收所有被标记的对象;  
+                  标记清除算法的缺点是标记和清除的效率都不高，而且清除后会产生大量的不连续的内存空间;  
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1giedvel2j310h0u0ac8.jpg)   
+
+    复制算法:  该算法会把JVM的内存分为两部分，一部分用于存储对象，另一部分空闲，当一部分内存用完的时候就把该部分内存中尚存活的对象移动到  
+              另一部分内存中；然后清理该该部分内存；  
+              复制算法太过于浪费内存，实际上能够使用的内存缩小为原来的一半;  
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gij37eclj30z60sk76f.jpg)
+    
+    标记整理算法: 该算法分为两步骤，第一步标记出需要回收的对象，然后让所有存活的对象向一端移动，然后直接清理掉端边界以外的内存；
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gipq04yxj310p0u0tao.jpg)
+
+    分代收集算法：把堆内存分为新生代和老年代，新生代又分为Eden区,from Survivor,to Survivor,一般新生代区的对象都是朝生夕灭的，每次  
+                只有少量的对象存活下来,因此新生代采用复制算法，只需要复制那些少量的对象来完成垃圾回收；而老年代区域的对象一般存活率比  
+                较高，所以采用标记整理的算法进行回收； 
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1g1giwo8cmtj311o0gy757.jpg)                
+   
+    ref:https://mp.weixin.qq.com/s/H__cChHHyvGInQBnehmIxw?from=groupmessage&isappinstalled=0
+
+#### 说一下 jvm 有哪些垃圾回收器？
+    
+    
+
+
 * 详细介绍一下 CMS 垃圾回收器？
 * 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
 * 简述分代垃圾回收器是怎么工作的？
 * 说一下 jvm 调优的工具？
 #### 常用的 jvm 调优的参数都有哪些？
 https://mp.weixin.qq.com/s/tfyHwbsNCTjvMGTrfQ0qwQ
-
+#### JVM参数详细
+https://mp.weixin.qq.com/s/tfyHwbsNCTjvMGTrfQ0qwQ
+#### 参考:
 https://juejin.im/post/5c875fb96fb9a049a82029b4
 
 
