@@ -851,11 +851,11 @@ ref:https://crowhawk.github.io/2017/08/15/jvm_3/
 
 #### 详细介绍一下CMS垃圾回收器？
 CMS的工作流程: 
-1, 初始标记（CMS initial mark）:标记GC Root能关联到的对象，速度很快，但是需要"Stop The World";  
-2, 并发标记（CMS concurrent mark）:并行执行GC Root Tracing，在整个过程中该步骤最耗时间；
-3, 重新标记（CMS remark）:用于重复标记因为并发标记期间用户程序运行而造成的标记产生变动的那一部分对象的标记记录; 此步骤
+1. 初始标记（CMS initial mark）:标记GC Root能关联到的对象，速度很快，但是需要"Stop The World";  
+2. 并发标记（CMS concurrent mark）:并行执行GC Root Tracing，在整个过程中该步骤最耗时间；
+3. 重新标记（CMS remark）:用于重复标记因为并发标记期间用户程序运行而造成的标记产生变动的那一部分对象的标记记录; 此步骤
    需要"Stop The World"; 但是停顿时间没有第一步长;  
-4, 并发清除（CMS concurrent sweep）  
+4. 并发清除（CMS concurrent sweep）  
 CMS优点: 并发收集，低停顿；
 CMS缺点: 
 ![](https://ws1.sinaimg.cn/large/006tKfTcgy1g1gk5s6s55j312i0c2gp2.jpg)
