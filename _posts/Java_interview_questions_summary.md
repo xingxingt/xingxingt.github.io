@@ -813,31 +813,56 @@
     ref:http://www.importnew.com/20468.html
 
 #### 说一下jvm 有哪些垃圾回收算法？
-    标记-清除算法： 该算法分为两部分，第一部分是标记，标记出所有需要回收的对象，标记完成后统一回收所有被标记的对象;  
-                  标记清除算法的缺点是标记和清除的效率都不高，而且清除后会产生大量的不连续的内存空间;  
+标记-清除算法： 该算法分为两部分，第一部分是标记，标记出所有需要回收的对象，标记完成后统一回收所有被标记的对象;    
+标记清除算法的缺点是标记和清除的效率都不高，而且清除后会产生大量的不连续的内存空间;  
 ![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1giedvel2j310h0u0ac8.jpg)   
-
-    复制算法:  该算法会把JVM的内存分为两部分，一部分用于存储对象，另一部分空闲，当一部分内存用完的时候就把该部分内存中尚存活的对象移动到  
-              另一部分内存中；然后清理该该部分内存；  
-              复制算法太过于浪费内存，实际上能够使用的内存缩小为原来的一半;  
-![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gij37eclj30z60sk76f.jpg)
-    
-    标记整理算法: 该算法分为两步骤，第一步标记出需要回收的对象，然后让所有存活的对象向一端移动，然后直接清理掉端边界以外的内存；
+复制算法:  该算法会把JVM的内存分为两部分，一部分用于存储对象，另一部分空闲，当一部分内存用完的时候就把该部分内存中尚存活的对象移动到  
+另一部分内存中；然后清理该该部分内存；  
+复制算法太过于浪费内存，实际上能够使用的内存缩小为原来的一半;   
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gij37eclj30z60sk76f.jpg)    
+标记整理算法: 该算法分为两步骤，第一步标记出需要回收的对象，然后让所有存活的对象向一端移动，然后直接清理掉端边界以外的内存；
 ![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gipq04yxj310p0u0tao.jpg)
-
-    分代收集算法：把堆内存分为新生代和老年代，新生代又分为Eden区,from Survivor,to Survivor,一般新生代区的对象都是朝生夕灭的，每次  
-                只有少量的对象存活下来,因此新生代采用复制算法，只需要复制那些少量的对象来完成垃圾回收；而老年代区域的对象一般存活率比  
-                较高，所以采用标记整理的算法进行回收； 
+分代收集算法：把堆内存分为新生代和老年代，新生代又分为Eden区,from Survivor,to Survivor,一般新生代区的对象都是朝生夕灭的，每次  
+只有少量的对象存活下来,因此新生代采用复制算法，只需要复制那些少量的对象来完成垃圾回收；而老年代区域的对象一般存活率比较高，  
+所以采用标记整理的算法进行回收； 
 ![](https://ws2.sinaimg.cn/large/006tKfTcgy1g1giwo8cmtj311o0gy757.jpg)                
-   
-    ref:https://mp.weixin.qq.com/s/H__cChHHyvGInQBnehmIxw?from=groupmessage&isappinstalled=0
+ref:https://mp.weixin.qq.com/s/H__cChHHyvGInQBnehmIxw?from=groupmessage&isappinstalled=0
 
 #### 说一下 jvm 有哪些垃圾回收器？
-    
-    
+* 新生代垃圾收集器：  
+Serial收集器: 他是一个单线程的收集器，采用的是复制算法的收集器；只要Serial收集器在工作，必须暂停所有的工作线程等待Serial收集器运行完成；  
+![](https://ws4.sinaimg.cn/large/006tKfTcgy1g1gjd44lc3j312c0dc76m.jpg)
+ParNew:是Serial的多线程版本，它的回收策略,回收算法和Serial基本相同;但在单CPU的环境中绝对不会有比Serial收集器有更好的效果；  
+它默认开启的收集线程数与CPU的数量相同，在CPU非常多的情况下可使用-XX:ParallerGCThreads参数设置。  
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1gjgc461zj31200dedii.jpg)
+Parallel Scavenge收集器:该收集器是并行的多线程新生代收集器，他也是采用复制算法，Parallel Scavenge的关注点在于达到一个可控的吞吐量，而  
+其他收集器主要关注尽可能的缩短垃圾回收时停顿的时间;  
+* 老年代收集器:
+Serial Old是Serial的老年代版本，它同样也是单线程的收集器，采用`标记-整理`算法;它的工作流程与Serial收集器相同； 
+Parallel Old收集器是Parallel Scavenge收集器的老年代版本，采用`标记-整理`算法，该算的工作流和Parallel Scavenge收集器一样，如下:  
+![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1gjr9knphj31220d80ve.jpg)
+CMS(concurrent Mark Sweep)收集器： 该收集器是以获取最短的回收停顿时间为目的的收集器，采用`标记-清除`算法；适合追求响应速度的B/S服务;
+![](https://ws1.sinaimg.cn/large/006tKfTcgy1g1gk5s6s55j312i0c2gp2.jpg)
+G1收集器: 面向服务端应用的垃圾收集器;可以做到并行并发，分代收集，空间整合，可预测的停顿；  
+对比:  
+![](https://ws1.sinaimg.cn/large/006tKfTcgy1g1gk9rci44j31340qy76e.jpg)
+ref:https://crowhawk.github.io/2017/08/15/jvm_3/
 
 
-* 详细介绍一下 CMS 垃圾回收器？
+#### 详细介绍一下CMS垃圾回收器？
+CMS的工作流程: 
+1, 初始标记（CMS initial mark）:标记GC Root能关联到的对象，速度很快，但是需要"Stop The World";  
+2, 并发标记（CMS concurrent mark）:并行执行GC Root Tracing，在整个过程中该步骤最耗时间；
+3, 重新标记（CMS remark）:用于重复标记因为并发标记期间用户程序运行而造成的标记产生变动的那一部分对象的标记记录; 此步骤
+   需要"Stop The World"; 但是停顿时间没有第一步长;  
+4, 并发清除（CMS concurrent sweep）  
+CMS优点: 并发收集，低停顿；
+CMS缺点: 
+![](https://ws1.sinaimg.cn/large/006tKfTcgy1g1gk5s6s55j312i0c2gp2.jpg)
+
+#### 详细介绍一下G1垃圾回收器？
+
+
 * 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
 * 简述分代垃圾回收器是怎么工作的？
 * 说一下 jvm 调优的工具？
