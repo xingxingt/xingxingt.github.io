@@ -839,7 +839,7 @@ ParNew:是Serial的多线程版本，它的回收策略,回收算法和Serial基
 ![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1gjgc461zj31200dedii.jpg)
 Parallel Scavenge收集器:该收集器是并行的多线程新生代收集器，他也是采用复制算法，Parallel Scavenge的关注点在于达到一个可控的吞吐量，而  
 其他收集器主要关注尽可能的缩短垃圾回收时停顿的时间;  
-* 老年代收集器:
+* 老年代收集器:  
 Serial Old是Serial的老年代版本，它同样也是单线程的收集器，采用`标记-整理`算法;它的工作流程与Serial收集器相同； 
 Parallel Old收集器是Parallel Scavenge收集器的老年代版本，采用`标记-整理`算法，该算的工作流和Parallel Scavenge收集器一样，如下:  
 ![](https://ws3.sinaimg.cn/large/006tKfTcgy1g1gjr9knphj31220d80ve.jpg)
@@ -859,13 +859,45 @@ CMS的工作流程:
    需要"Stop The World"; 但是停顿时间没有第一步长;  
 4. 并发清除（CMS concurrent sweep）  
 CMS优点: 并发收集，低停顿；
-CMS缺点: 
+CMS缺点:     
+   1. 对CPU资源比较敏感，因为CMS是面向并发的程序,在并发阶段，虽然不会停止用户线程，但是会占用一部分线程资源，从而导致应用程序变慢，降低吞吐量;  
+   2. 无法处理浮动垃圾,即:CMS收集器在回收的时候仍有一部分用户线程在运行着，这也伴随着有新的垃圾不断产生，这一部分垃圾出现后CMS不能再次集中的进行  
+      处理一次，只能等到下次GC时再进行回收，这一部分的垃圾就称为浮动垃圾；   
+   3. 标记清除产生的空间碎片,空间碎片过多就会导致很多大对象分配内存的麻烦，从而出现老年代空间剩余，但是无法申请到连续的内存空间给大对象;  
+ref:https://blog.csdn.net/zqz_zqz/article/details/70568819  
+    https://crowhawk.github.io/2017/08/15/jvm_3/
 ![](https://ws1.sinaimg.cn/large/006tKfTcgy1g1gk5s6s55j312i0c2gp2.jpg)
 
 #### 详细介绍一下G1垃圾回收器？
+* G1垃圾收集器的特点：  
+1. 并行并发； 
+2. 分代收集; 
+3. 空间整合,G1从整体来看是通过`标记-整理`的算法，但从局部(两个Regiion之间)来看采用的是`复制`算法;
+4. 可预测的停顿,降低停顿时间对CMS和G1是共同点，但G1不仅降低了停顿时间，还能建立可预测的停顿时间模型;  
+* G1收集器横跨整个堆内存:  
+G1之前的垃圾收集器的收集范围都是针对整个新生代或者老年代的；而G1却不是这样，G1收集器将java的堆内存划分为多个大小相等的独立区域(Region)，虽然还保留着新生代和老年代的概念，但是新生代和老年代不存在物理隔离,他们都是一部分Region的集合;
+* G1收集器建立可预测的时间模型:  
+G1收集器可以避免在整个java堆中进行全区域的垃圾回收,G1中维护一个垃圾回收优先级列表，每次根据允许的收集时间，回收最大价值的Region(Garbage First),这种使用Region划分内存空间并且根据优先级的区域回收方式，保证了G1收集器在有限的时间内能获得最大的回收效率;  
+* G1的避免全堆扫描——Remembered Set：  
+G1把整个java堆划分成了多个Region,但是对象被分配在一个Region中可以与堆中的任意对象有引用关系，所以在做可达性分析时为了确定某个对象是否存活的时候需要扫描整个heap区域,为了避免这样的事情发生，虚拟机为G1的每个Region维护了一个与之对应的Remembered Set；这样便可以把一个对象所属的Region之外的引用信息记录在被引用对象的Remembered Set中,当进行内存回收时，在GC根节点的枚举范围中加入Remembered Set即可保证不对全堆扫描也不会有遗漏。
+* G1垃圾收集运行过程(不包含维护Rememberd Set):
+1. 初始标记:需要停顿线程，但是耗时很短； 
+2. 并发标记:GC Root的可达性分析，耗时较长,但是可与用户线程同时执行; 
+3. 最终标记:为了修正在并发标记期间因用户程序继续运作而导致标记产生变动的那一部分标记记录，需要停顿线程，但是可并行执行; 
+4. 筛选回收: 对各个Region的回收价值进行排序,筛选出最具有价值的Region进行回收; 
+ref:https://crowhawk.github.io/2017/08/15/jvm_3/
+![](https://ws1.sinaimg.cn/large/006tKfTcly1g1hobryps1j312s0ciq69.jpg)
 
 
-* 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
+#### 新生代垃圾回收器和老生代垃圾回收器都有哪些？有什么区别？
+    新生代: Serial,ParNew,Parallel Scavenge     
+    老年代: Serial Old,Parallel Old,CMS  
+    
+    区别:  
+    新生代GC（Minor GC）：指发生在新生代的垃圾收集动作，因为Java对象大多都具备朝生夕灭的特性，所以Minor GC非常频繁，一般回收速度也比较快。  
+    老年代GC（Major GC / Full GC）：指发生在老年代的GC，出现了Major GC，经常会伴随至少一次的Minor GC（但非绝对的，在Parallel Scavenge收  
+    集器的收集策略里就有直接进行Major GC的策略选择过程）。Major GC的速度一般会比Minor GC慢10倍以上。  
+
 * 简述分代垃圾回收器是怎么工作的？
 * 说一下 jvm 调优的工具？
 #### 常用的 jvm 调优的参数都有哪些？
