@@ -933,7 +933,8 @@ https://juejin.im/post/5c875fb96fb9a049a82029b4
 * 说一下 mysql 的行锁和表锁？
 * 说一下乐观锁和悲观锁？
 * mysql 问题排查都有哪些手段？
-* 如何做 mysql 的性能优化
+* 如何做 mysql 的性能优化  
+https://maimai.cn/article/detail?fid=1188457423&efid=b6VprMXHZGlLNLckx8yfAQ
 
 
 ### 多线程二
