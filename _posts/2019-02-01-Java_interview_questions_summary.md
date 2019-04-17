@@ -309,9 +309,16 @@ ref:https://juejin.im/entry/57bfab077db2a20068ebf9d2
 * 堆的结构
 * 堆和树的区别
 * 堆和栈在内存中的区别是什么(解答提示：可以从数据结构方面以及实际实现方面两个方面去回答)？
-* 什么是深拷贝和浅拷贝  
-ref:https://my.oschina.net/jackieyeah/blog/206391#comments  
-* 手写链表逆序代码
+#### 什么是深拷贝和浅拷贝 
+     浅拷贝: 浅copy会创建一个新的对象，是对原始对象的一份精确拷贝，如果原始对象中有基本数据类型，则copy的是基本数据类型的值，如果原始对象中存在  
+            引用数据类型，则copy的是引用数据类型的引用地址,如果其中一个对象改变了该引用地址，则另一个对象对象也会发生改变;  
+     深拷贝：深copy会copy原始对象基本数据类型值和引用对象指向的动态内存,当对象和它引用的对象一起copy时便是深copy;深copy相比浅copy花费的时间久，
+            花销大;        
+    ref:https://my.oschina.net/jackieyeah/blog/206391#comments    
+    
+#### 手写链表逆序代码
+    code:https://github.com/xingxingt/centrecode/blob/master/src/main/java/dataStructure/SingleLinkedReverse.java
+
 * 讲一下对树，B+树的理解
 * 讲一下对图的理解
 * 判断单链表成环与否？
