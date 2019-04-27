@@ -36,10 +36,60 @@ ConcurrentHashMap采用 分段锁的机制，实现并发的更新操作，底�
 和HashMap类似，ConcurrentHashMap使用了一个table来存储Node，ConcurrentHashMap同样使用记录的key的hashCode来寻找记录的存储index，而处理哈希冲突的方式与HashMap也是类似的，冲突的记录将被存储在同一个位置上，形成一条链表，当链表的长度大于8的时候会将链表转化为一棵红黑树，从而将查找的复杂度从O(N)降到了O(lgN)
 
 
-## 源码分析    
+## 源码分析  
+
+#### table的初始化
+
+先说下sizeCtl变量，该变量默认为0，控制table的初始化和扩容操作；  
+```java  
+/**
+     * Table initialization and resizing control.  When negative, the
+     * table is being initialized or resized: -1 for initialization,
+     * else -(1 + the number of active resizing threads).  Otherwise,
+     * when table is null, holds the initial table size to use upon
+     * creation, or 0 for default. After initialization, holds the
+     * next element count value upon which to resize the table.
+     * -1表示table正在初始化
+     * -N表示table有N-1个线程正在进行table初始化操作
+     * 如果table未初始化 则sizeCtl表示需要初始化的大小   
+     * 如果table已经初始化则表示table的容量，默认是table大小的0.75倍； 
+     */
+    private transient volatile int sizeCtl;
+```
+table的初始化操作如下:
+```java
+ /**
+     * Initializes table, using the size recorded in sizeCtl.
+     */
+    private final Node<K,V>[] initTable() {
+        Node<K,V>[] tab; int sc;
+        while ((tab = table) == null || tab.length == 0) {
+            if ((sc = sizeCtl) < 0)  //如果sizeCtl<0则代表有其他线程正在进行初始化操作,即执行Thread.yield();让出cpu的执行权
+                Thread.yield(); // lost initialization race; just spin
+            else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) { //否则将sizeCtl的值置为-1，代表当前线程正在初始化table
+                try {
+                    if ((tab = table) == null || tab.length == 0) {
+                        int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
+                        @SuppressWarnings("unchecked")
+                        Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
+                        table = tab = nt;
+                        sc = n - (n >>> 2);
+                    }
+                } finally {
+                    sizeCtl = sc;
+                }
+                break;
+            }
+        }
+        return tab;
+    }
+```
+
+table初始化完毕之后就可以执行put操作
+
 
 #### put源码分析  
-
+put操作采用CAS+synchronized实现并发插入或更新操作，代码如下：  
 ```java
  /** Implementation for put and putIfAbsent */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
@@ -108,5 +158,7 @@ ConcurrentHashMap采用 分段锁的机制，实现并发的更新操作，底�
     }
 
 ```
+
+
 
 
